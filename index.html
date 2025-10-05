@@ -1,390 +1,315 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Mission Vista — Solar System (Local Textures)</title>
-
-  <!-- Tailwind (UI only) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-
-  <!-- Three.js + OrbitControls -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
-
-  <style>
-    :root { --glass: rgba(20,20,40,.6); }
-    html, body { height:100%; margin:0; background: radial-gradient(100% 80% at 50% 0%, #0a0a20 0%, #000 80%); color:#eaf2ff; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
-    .starfield { position: fixed; inset: 0; z-index: -10; background: radial-gradient(circle at 50% 20%, #1a1a3d, #000); animation: stars 200s linear infinite; }
-    @keyframes stars { from { background-position:0 0;} to { background-position:10000px 10000px; } }
-    .glass { background:var(--glass); backdrop-filter: blur(8px); border:1px solid rgba(120,120,200,.15); }
-    .btn { padding:.45rem .65rem; border-radius:.75rem; font-size:.85rem; background: rgba(120,130,255,.14); border:1px solid rgba(120,130,255,.25); line-height:1; }
-    .btn:hover{ background: rgba(120,130,255,.22) }
-    #planet-canvas{ width:100%; height:100%; display:block }
-    #planet-hud { position:absolute; left:12px; bottom:12px; color:#9fb0d3; font-size:12px }
-    /* Inspect modal */
-    #inspectOverlay { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:99999; }
-    #inspectPanel { width:min(92vw,1100px); height:min(86vh,720px); background:#0a0f24; border:1px solid rgba(255,255,255,.12); border-radius:16px; display:flex; flex-direction:column; }
-    #inspectHeader { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.12); }
-    #inspectBody { flex:1; position:relative; background:#000; border-radius:0 0 16px 16px; overflow:hidden; }
-    #inspectCanvas { position:absolute; inset:0; }
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'; color: #e5eeff; -webkit-text-stroke: #e5eeff}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'; color: #e5eeff; -webkit-text-stroke: #e5eeff; min-height: 15.0px}
+    span.s1 {font-kerning: none}
   </style>
 </head>
 <body>
-<div class="starfield"></div>
-
-<header class="p-6 flex justify-between items-center">
-  <h1 class="text-2xl font-bold tracking-wider">MISSION VISTA</h1>
-  <div class="space-x-3">
-    <button id="inspectBtn" class="btn hidden">Inspect</button>
-    <button id="stopFollowBtn" class="btn hidden">Stop following</button>
-  </div>
-</header>
-
-<!-- Scene -->
-<div class="w-full h-[calc(100vh-80px)] relative">
-  <canvas id="planet-canvas" aria-label="Solar System canvas"></canvas>
-  <div id="planet-hud">Drag = orbit • Scroll = zoom • Double-click empty space to reset</div>
-
-  <!-- quick planet chooser -->
-  <div id="chooser" class="absolute top-4 right-4 z-20 flex gap-2 flex-wrap max-w-[60vw]"></div>
-
-  <!-- name + stats -->
-  <div class="absolute top-4 left-4 z-20 text-sm opacity-90 bg-black/40 px-3 py-2 rounded-xl border border-white/10">
-    <div id="planetName" class="font-semibold">Click a planet or Moon</div>
-    <div id="stats" class="text-xs opacity-90"></div>
-  </div>
-</div>
-
-<!-- === Inspect Modal (single instance) === -->
-<div id="inspectOverlay">
-  <div id="inspectPanel">
-    <div id="inspectHeader">
-      <div class="title" id="inspectTitle" style="font-weight:700">Inspect</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <label class="text-xs" style="font-size:12px;display:flex;gap:6px;align-items:center;">
-          <input id="spinToggle" type="checkbox"/> Spin
-        </label>
-        <button id="resetInspectCam" class="btn">Reset view</button>
-        <button id="closeInspect" class="btn">Close</button>
-      </div>
-    </div>
-    <div id="inspectBody"><div id="inspectCanvas"></div></div>
-  </div>
-</div>
-
-<script>
-/* ---------- THREE SETUP ---------- */
-const canvas = document.getElementById('planet-canvas');
-const renderer = new THREE.WebGLRenderer({ antialias:true, canvas });
-renderer.setSize(canvas.clientWidth||innerWidth, canvas.clientHeight||innerHeight, false);
-renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2));
-if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace; else renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-
-const scene = new THREE.Scene(); scene.background = new THREE.Color(0x000000);
-const camera = new THREE.PerspectiveCamera(60, (canvas.clientWidth||innerWidth)/(canvas.clientHeight||innerHeight), 0.1, 5000);
-camera.position.set(0, 30, 110);
-const controls = new THREE.OrbitControls(camera, canvas);
-controls.enableDamping = true; controls.dampingFactor = 0.06; controls.enablePan = false;
-const BASE_MIN_DISTANCE = 5; controls.minDistance = BASE_MIN_DISTANCE; controls.maxDistance = 900;
-
-// Resize
-function resizeRendererToDisplaySize(){
-  const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
-  const need = canvas.width !== Math.floor(w*renderer.getPixelRatio()) || canvas.height !== Math.floor(h*renderer.getPixelRatio());
-  if(need){ renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
-}
-window.addEventListener('resize', resizeRendererToDisplaySize);
-
-// Lights + Sun
-scene.add(new THREE.AmbientLight(0xffffff, 0.38));
-scene.add(new THREE.HemisphereLight(0xbfdfff, 0x080820, 0.28));
-const sunLight = new THREE.PointLight(0xffffff, 2.1, 0); sunLight.position.set(0,0,0); scene.add(sunLight);
-const sun = new THREE.Mesh(new THREE.SphereGeometry(3, 64, 48), new THREE.MeshBasicMaterial({color:0xffffff})); scene.add(sun);
-
-// HUD refs
-const planetNameEl = document.getElementById('planetName'); const statsEl = document.getElementById('stats');
-const inspectBtn = document.getElementById('inspectBtn'); const stopFollowBtn = document.getElementById('stopFollowBtn');
-function setStats(t){ statsEl.textContent = t||''; } function fmt(n){ return typeof n==='number'? n.toLocaleString() : n; }
-
-/* ---------- Local textures (served by GitHub Pages or local server) ---------- */
-const TEXSRC = {
-  mercury: ["textures/mercury.jpg"],
-  venus:   ["textures/venus.jpg"],
-  earth:   ["textures/earth.jpg"],
-  moon:    ["textures/moon.jpg"],
-  mars:    ["textures/mars.jpg"],
-  jupiter: ["textures/jupiter.jpg"],
-  saturn:  ["textures/saturn.jpg"],
-  uranus:  ["textures/uranus.jpg"],
-  neptune: ["textures/neptune.jpg"]
-};
-
-const texLoader = new THREE.TextureLoader();
-function maxAniso(){ return renderer.capabilities.getMaxAnisotropy?.() || 8; }
-function loadFromList(urls, ok, fail){
-  let i=0;
-  const tryNext=()=>{ if(i>=urls.length){ fail&&fail(); return; }
-    const u=urls[i++]; texLoader.load(u, t=>{ t.anisotropy=maxAniso(); if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding; ok(t,u); }, undefined, tryNext);
-  }; tryNext();
-}
-function textureCandidatesFor(key){ return TEXSRC[key]||[]; }
-function colorTexture(hex=0x777777){ const c=document.createElement('canvas'); c.width=c.height=2; const x=c.getContext('2d'); x.fillStyle='#'+hex.toString(16).padStart(6,'0'); x.fillRect(0,0,2,2); const t=new THREE.CanvasTexture(c); t.anisotropy=maxAniso(); if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding; return t; }
-
-/* ---------- Planet data + axial spin ---------- */
-const SPIN_MULTIPLIER = 5000; // visual speedup (increase/decrease to taste)
-const planetDefs = [
-  {name:'Mercury', radius:0.38, dist:5,  orbitSpeed:0.040,  tiltDeg:0.03,  key:'mercury', color:0x9aa0a6, spinHours:1407.5},
-  {name:'Venus',   radius:0.95, dist:7,  orbitSpeed:0.015,  tiltDeg:177.4, key:'venus',   color:0xe5bd9a, spinHours:-5832.5},
-  {name:'Earth',   radius:1.00, dist:10, orbitSpeed:0.010,  tiltDeg:23.4,  key:'earth',   color:0x2e74c8, spinHours:24},
-  {name:'Mars',    radius:0.53, dist:15, orbitSpeed:0.0053, tiltDeg:25.2,  key:'mars',    color:0xb44b32, spinHours:24.6},
-  {name:'Jupiter', radius:1.50, dist:25, orbitSpeed:0.00084,tiltDeg:3.1,   key:'jupiter', color:0xd2b48c, spinHours:9.9},
-  {name:'Saturn',  radius:1.20, dist:35, orbitSpeed:0.00034,tiltDeg:26.7,  key:'saturn',  color:0xead6a4, spinHours:10.7},
-  {name:'Uranus',  radius:1.00, dist:45, orbitSpeed:0.00012,tiltDeg:97.8,  key:'uranus',  color:0x7fcfd6, spinHours:-17.2},
-  {name:'Neptune', radius:1.00, dist:55, orbitSpeed:0.00006,tiltDeg:28.3,  key:'neptune', color:0x3455d1, spinHours:16.1}
-];
-const INFO = {
-  Mercury:{radiusKm:2440,yearDays:88,dayHours:1407.5,moons:0,summary:"Cratered, airless world."},
-  Venus:{radiusKm:6052,yearDays:225,dayHours:5832.5,moons:0,summary:"Hottest planet; thick clouds; retrograde spin."},
-  Earth:{radiusKm:6371,yearDays:365,dayHours:24,moons:1,summary:"Oceans, continents, dynamic weather."},
-  Mars:{radiusKm:3390,yearDays:687,dayHours:24.6,moons:2,summary:"Rust deserts, canyons, shield volcanoes."},
-  Jupiter:{radiusKm:69911,yearDays:4333,dayHours:9.9,moons:"80+",summary:"Banded giant with jet streams and storms."},
-  Saturn:{radiusKm:58232,yearDays:10759,dayHours:10.7,moons:"80+",summary:"Pale gas giant with dramatic rings."},
-  Uranus:{radiusKm:25362,yearDays:30687,dayHours:17.2,moons:27,summary:"Sideways ice giant; smooth cyan bands."},
-  Neptune:{radiusKm:24622,yearDays:60190,dayHours:16.1,moons:14,summary:"Deep blue ice giant with fierce winds."},
-  Moon:{radiusKm:1737,yearDays:27.3,dayHours:655.7,moons:0,summary:"Tidally locked — same face toward Earth.",parent:"Earth"}
-};
-
-/* ---------- Helpers ---------- */
-function addOrbitRing(dist){
-  const ring = new THREE.Mesh(
-    new THREE.RingGeometry(dist-0.03, dist+0.03, 256),
-    new THREE.MeshBasicMaterial({ color: 0x7BDFFF, side: THREE.DoubleSide, opacity: 0.18, transparent: true })
-  ); ring.rotation.x=-Math.PI/2; scene.add(ring);
-}
-function makeHighResRingsTexture(size=2048){
-  const c=document.createElement('canvas'); c.width=size; c.height=size; const ctx=c.getContext('2d');
-  const cx=size/2, cy=size/2, R=size/2, inner=0.45*R, outer=0.95*R, img=ctx.createImageData(size,size);
-  for(let y=0;y<size;y++)for(let x=0;x<size;x++){
-    const dx=x-cx, dy=y-cy, rr=Math.hypot(dx,dy), i=(y*size+x)*4; if(rr<inner||rr>outer){ img.data[i+3]=0; continue; }
-    const t=(rr-inner)/(outer-inner), fine=Math.sin(t*1200)*.5+.5, med=Math.sin(t*60+t*10)*.5+.5;
-    const base=.62+.34*med, shade=base*(.84+.16*fine), edge=Math.min(1,Math.max(0,Math.min(t*6,(1-t)*6)));
-    img.data[i]=Math.round(235*shade*edge); img.data[i+1]=Math.round(225*shade*edge); img.data[i+2]=Math.round(205*shade*edge); img.data[i+3]=Math.round(245*edge);
-  }
-  ctx.putImageData(img,0,0); const tex=new THREE.CanvasTexture(c); tex.anisotropy=maxAniso(); return tex;
-}
-
-const planets=[], clickables=[], ringsToFollow=[], planetMeshesByName={}; let earthMesh=null;
-function phong(){ return new THREE.MeshPhongMaterial({ color:0xffffff, specular:0x222222, shininess:10 }); }
-
-/* ---------- Create planets (with axial spin) ---------- */
-function addPlanet(def){
-  addOrbitRing(def.dist);
-  const mesh = new THREE.Mesh(new THREE.SphereGeometry(def.radius,64,48), phong());
-  mesh.rotation.z = THREE.MathUtils.degToRad(def.tiltDeg);
-  mesh.userData = {
-    type:'planet', name:def.name, dist:def.dist,
-    theta:Math.random()*Math.PI*2, orbitSpeed:def.orbitSpeed, radius:def.radius,
-    spinRadPerSec: (2*Math.PI/(Math.abs(def.spinHours||24)*3600)) * (def.spinHours<0?-1:1) * SPIN_MULTIPLIER
-  };
-  mesh.position.set(def.dist*Math.cos(mesh.userData.theta),0,def.dist*Math.sin(mesh.userData.theta));
-  scene.add(mesh); planets.push(mesh); clickables.push(mesh); planetMeshesByName[def.name]=mesh; if(def.name==='Earth') earthMesh=mesh;
-
-  loadFromList(textureCandidatesFor(def.key), t=>{ mesh.material.map=t; mesh.material.bumpMap=t; mesh.material.bumpScale=0.02; mesh.material.needsUpdate=true; },
-    ()=>{ mesh.material.map=colorTexture(def.color); mesh.material.needsUpdate=true; });
-
-  if(def.name==='Saturn'){
-    const inner=def.radius*2.10, outer=def.radius*3.85;
-    const ringGeo=new THREE.RingGeometry(inner,outer,1024,1);
-    const ringMat=new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide});
-    const ring=new THREE.Mesh(ringGeo,ringMat); ring.rotation.x=-Math.PI/2; ring.position.copy(mesh.position);
-    scene.add(ring); ringsToFollow.push({ring,parent:mesh});
-    ringMat.map=makeHighResRingsTexture(2048); ringMat.opacity=1.0; ringMat.needsUpdate=true;
-  }
-}
-planetDefs.forEach(addPlanet);
-
-// Moon (orbits Earth)
-const moon = new THREE.Mesh(new THREE.SphereGeometry(0.27,64,48), phong());
-moon.userData = { type:'moon', name:'Moon', parent:null, distFromParent:2.5, theta:Math.random()*Math.PI*2, orbitSpeed:0.08, radius:0.27, tiltDeg:6.7, spinRadPerSec:(2*Math.PI/(655.7*3600))*SPIN_MULTIPLIER };
-moon.rotation.z = THREE.MathUtils.degToRad(moon.userData.tiltDeg);
-scene.add(moon); clickables.push(moon);
-loadFromList(textureCandidatesFor('moon'), t=>{ moon.material.map=t; moon.material.bumpMap=t; moon.material.bumpScale=0.03; moon.material.needsUpdate=true; }, ()=>{ moon.material.map=colorTexture(0xaaaaaa); moon.material.needsUpdate=true; });
-
-/* ---------- Safety buffer ---------- */
-function getEffectiveRadius(obj){ return (obj?.userData?.radius)||1; }
-function enforceSafetyBufferFor(body){ const r=getEffectiveRadius(body); controls.minDistance=Math.max(r*1.15,2); }
-function clampCameraToSafety(){
-  let nearest=null, best=Infinity; const tgt=controls.target; const bodies=[...planets,moon];
-  for(const b of bodies){ const d=b.position.distanceTo(tgt); if(d<best){best=d; nearest=b;} }
-  if(!nearest){ controls.minDistance=BASE_MIN_DISTANCE; return; }
-  const r=getEffectiveRadius(nearest); const safe=Math.max(r*1.15,2);
-  controls.minDistance=Math.max(safe,BASE_MIN_DISTANCE);
-  const camDir=new THREE.Vector3().subVectors(camera.position,tgt); const dist=camDir.length();
-  if(dist<controls.minDistance){ camDir.normalize(); camera.position.copy(tgt.clone().add(camDir.multiplyScalar(controls.minDistance))); }
-}
-controls.addEventListener && controls.addEventListener('change', clampCameraToSafety);
-
-/* ---------- Chooser ---------- */
-const chooser = document.getElementById('chooser');
-['Mercury','Venus','Earth','Moon','Mars','Jupiter','Saturn','Uranus','Neptune'].forEach(n=>{
-  const b=document.createElement('button'); b.className='btn'; b.textContent=n;
-  b.onclick=()=>{ const m=(n==='Moon')?moon:planetMeshesByName[n]; if(m) onSelectBody(m); };
-  chooser.appendChild(b);
-});
-
-/* ---------- Select / follow ---------- */
-let following=false, followedBody=null, prevTarget=new THREE.Vector3(), isFocusing=false;
-function startFocusAndFollow(body){
-  followedBody=body; following=false; isFocusing=true; enforceSafetyBufferFor(body);
-  const r=body.userData.radius||1; const desired=body.position.clone().add(new THREE.Vector3(0,r*3,r*5));
-  const start=camera.position.clone(), st=controls.target.clone(), end=body.position.clone(); let t=0;
-  (function anim(){ t+=0.02; const e=t>=1?1:1-Math.pow(1-t,3);
-    camera.position.lerpVectors(start,desired,e); controls.target.lerpVectors(st,end,e);
-    if(e<1) requestAnimationFrame(anim); else { prevTarget.copy(body.position); following=true; isFocusing=false; stopFollowBtn.classList.remove('hidden'); } })();
-}
-function updateFollowCamera(){ if(!following||!followedBody||isFocusing) return; const nt=followedBody.position, delta=new THREE.Vector3().subVectors(nt,prevTarget); camera.position.add(delta); controls.target.copy(nt); prevTarget.copy(nt); }
-function onSelectBody(body){
-  const name=body.userData?.name||'Object'; planetNameEl.textContent=name;
-  const d=INFO[name]; if(d) setStats(`${d.summary} • Radius: ${fmt(d.radiusKm)} km • Year: ${fmt(d.yearDays)} days • Day: ${fmt(d.dayHours)} h • Moons: ${fmt(d.moons)}`);
-  inspectBtn.classList.remove('hidden'); startFocusAndFollow(body);
-}
-stopFollowBtn.onclick=()=>{ following=false; followedBody=null; stopFollowBtn.classList.add('hidden'); };
-
-// Raycast select
-const raycaster=new THREE.Raycaster(), mouse=new THREE.Vector2();
-canvas.addEventListener('click',(e)=>{ const rect=canvas.getBoundingClientRect(); const x=(e.clientX-rect.left)/rect.width, y=(e.clientY-rect.top)/rect.height;
-  mouse.x=x*2-1; mouse.y=-(y*2-1); raycaster.setFromCamera(mouse,camera); const hits=raycaster.intersectObjects(clickables,true); if(!hits.length) return; onSelectBody(hits[0].object); });
-// Reset
-canvas.addEventListener('dblclick',()=>{ following=false; followedBody=null; stopFollowBtn.classList.add('hidden'); camera.position.set(0,30,110); controls.target.set(0,0,0); controls.minDistance=BASE_MIN_DISTANCE; planetNameEl.textContent='Click a planet or Moon'; setStats(''); inspectBtn.classList.add('hidden'); });
-
-/* ---------- Animate: orbits + axial spin ---------- */
-const clock=new THREE.Clock();
-function updateOrbits(dt){
-  planets.forEach(p=>{
-    const d=p.userData;
-    d.theta += d.orbitSpeed*dt*60; // orbital motion
-    const R=d.dist;
-    p.position.set(R*Math.cos(d.theta),0,R*Math.sin(d.theta));
-    if (d.spinRadPerSec) p.rotation.y += d.spinRadPerSec * dt; // axial spin
-  });
-  ringsToFollow.forEach(({ring,parent})=> ring.position.copy(parent.position));
-  if(earthMesh){
-    if(!moon.userData.parent) moon.userData.parent=earthMesh;
-    moon.userData.theta += moon.userData.orbitSpeed*dt*60;
-    const r=moon.userData.distFromParent;
-    moon.position.set(earthMesh.position.x+r*Math.cos(moon.userData.theta),0,earthMesh.position.z+r*Math.sin(moon.userData.theta));
-    moon.rotation.y += (moon.userData.spinRadPerSec||0)*dt;
-    moon.lookAt(earthMesh.position);
-  }
-}
-function animate(){ requestAnimationFrame(animate); const dt=clock.getDelta(); resizeRendererToDisplaySize(); updateOrbits(dt); updateFollowCamera(); clampCameraToSafety(); controls.update(); renderer.render(scene,camera); }
-animate();
-
-/* ---------- Inspect modal (single, reliable) ---------- */
-const inspectOverlay = document.getElementById('inspectOverlay');
-const inspectTitle   = document.getElementById('inspectTitle');
-const spinToggle     = document.getElementById('spinToggle');
-const resetInspectCam= document.getElementById('resetInspectCam');
-const closeInspect   = document.getElementById('closeInspect');
-const inspectCanvas  = document.getElementById('inspectCanvas');
-
-let inspRenderer, inspScene, inspCam, inspControls, inspMesh, inspRings=null, inspRAF=0, inspRadius=1;
-
-function inspectTextureCandidates(name){
-  const key = (name==='Moon') ? 'moon' : name.toLowerCase();
-  const locals = [`textures/${key}.jpg`];
-  const extra  = (TEXSRC[key]||[]);
-  const seen = new Set(); return [...locals, ...extra].filter(u=> (seen.has(u) ? false : (seen.add(u), true)));
-}
-
-function openInspect(name){
-  inspectTitle.textContent = `Inspect: ${name}`;
-  inspectOverlay.style.display = 'flex';
-
-  if (!inspRenderer){
-    inspRenderer = new THREE.WebGLRenderer({ antialias:true });
-    inspRenderer.setPixelRatio(Math.min(devicePixelRatio||1, 2));
-    if ('outputColorSpace' in inspRenderer) inspRenderer.outputColorSpace = THREE.SRGBColorSpace; else inspRenderer.outputEncoding = THREE.sRGBEncoding;
-    inspRenderer.toneMapping = THREE.ACESFilmicToneMapping;
-    inspRenderer.setSize(inspectCanvas.clientWidth, inspectCanvas.clientHeight);
-    inspectCanvas.appendChild(inspRenderer.domElement);
-
-    inspScene = new THREE.Scene(); inspScene.background = new THREE.Color(0x000000);
-    inspCam = new THREE.PerspectiveCamera(60, inspectCanvas.clientWidth/inspectCanvas.clientHeight, 0.01, 2000);
-    inspCam.position.set(0,0.8,2.2);
-    inspControls = new THREE.OrbitControls(inspCam, inspRenderer.domElement);
-    inspControls.enableDamping = true; inspControls.dampingFactor = 0.06; inspControls.enablePan = false;
-
-    inspScene.add(new THREE.AmbientLight(0xffffff, 0.5));
-    const L = new THREE.DirectionalLight(0xffffff, 1.0); L.position.set(5,2,8); inspScene.add(L);
-
-    new ResizeObserver(()=>{ const w=inspectCanvas.clientWidth, h=inspectCanvas.clientHeight; inspRenderer.setSize(w,h); inspCam.aspect=w/h; inspCam.updateProjectionMatrix(); }).observe(inspectCanvas);
-  }
-
-  if (inspMesh){ inspScene.remove(inspMesh); inspMesh.geometry.dispose(); inspMesh.material.map?.dispose(); inspMesh.material.dispose(); inspMesh=null; }
-  if (inspRings){ inspScene.remove(inspRings); inspRings.geometry.dispose(); inspRings.material.map?.dispose(); inspRings.material.dispose(); inspRings=null; }
-
-  const rLookup={Mercury:.38,Venus:.95,Earth:1,Moon:.27,Mars:.53,Jupiter:1.5,Saturn:1.2,Uranus:1,Neptune:1};
-  const tilt={Mercury:.03,Venus:177.4,Earth:23.4,Mars:25.2,Jupiter:3.1,Saturn:26.7,Uranus:97.8,Neptune:28.3,Moon:6.7}[name]||0;
-  inspRadius = rLookup[name] || 1;
-
-  inspMesh = new THREE.Mesh(new THREE.SphereGeometry(1,128,96), new THREE.MeshPhongMaterial({ color:0xffffff, specular:0x222222, shininess:10 }));
-  inspMesh.rotation.z = THREE.MathUtils.degToRad(tilt); inspMesh.scale.setScalar(inspRadius); inspScene.add(inspMesh);
-
-  const loader = new THREE.TextureLoader(); const cands = inspectTextureCandidates(name); let i=0;
-  const tryNext=()=>{ if(i>=cands.length) return; const u=cands[i++]; loader.load(u, t=>{ if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding; inspMesh.material.map=t; inspMesh.material.bumpMap=t; inspMesh.material.bumpScale=0.02; inspMesh.material.needsUpdate=true; }, undefined, tryNext); };
-  tryNext();
-
-  if (name==='Saturn'){
-    const inner=inspRadius*2.10, outer=inspRadius*3.85; const geo=new THREE.RingGeometry(inner,outer,1024,1);
-    const mat=new THREE.MeshBasicMaterial({ transparent:true, depthWrite:false, side:THREE.DoubleSide });
-    const ring=new THREE.Mesh(geo,mat); ring.rotation.x=-Math.PI/2;
-    const c=document.createElement('canvas'); c.width=c.height=2048; const ctx=c.getContext('2d');
-    const cx=c.width/2, cy=c.height/2, R=c.width/2, inr=0.45*R, outr=0.95*R, img=ctx.createImageData(c.width,c.height);
-    for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){
-      const dx=x-cx, dy=y-cy, rr=Math.hypot(dx,dy), i=(y*c.width+x)*4;
-      if(rr<inr||rr>outr){ img.data[i+3]=0; continue; }
-      const t=(rr-inr)/(outr-inr), fine=Math.sin(t*1200)*.5+.5, med=Math.sin(t*60+t*10)*.5+.5;
-      const base=.62+.34*med, shade=base*(.84+.16*fine), edge=Math.min(1,Math.max(0,Math.min(t*6,(1-t)*6)));
-      img.data[i]=Math.round(235*shade*edge); img.data[i+1]=Math.round(225*shade*edge); img.data[i+2]=Math.round(205*shade*edge); img.data[i+3]=Math.round(245*edge);
-    }
-    ctx.putImageData(img,0,0); mat.map = new THREE.CanvasTexture(c);
-    inspRings = ring; inspScene.add(ring);
-  }
-
-  inspControls.minDistance = Math.max(inspRadius*1.1, 0.25);
-  inspControls.maxDistance = Math.max(inspRadius*15, 8);
-  inspControls.target.set(0,0,0);
-  inspCam.position.set(0, inspRadius*0.8, inspRadius*2.2);
-
-  spinToggle.checked = false;
-  const tick=()=>{ inspRAF=requestAnimationFrame(tick); if(spinToggle.checked){ inspMesh.rotation.y += 0.01; } inspControls.update(); inspRenderer.render(inspScene,inspCam); };
-  cancelAnimationFrame(inspRAF); tick();
-}
-
-document.getElementById('inspectBtn').addEventListener('click', ()=>{
-  if (typeof followedBody === 'object' && followedBody?.userData?.name){
-    openInspect(followedBody.userData.name);
-  }
-});
-document.getElementById('closeInspect').addEventListener('click', ()=>{ inspectOverlay.style.display='none'; cancelAnimationFrame(inspRAF); });
-inspectOverlay.addEventListener('click', (e)=>{ if(e.target===inspectOverlay) document.getElementById('closeInspect').click(); });
-document.getElementById('resetInspectCam').addEventListener('click', ()=>{ inspControls?.target.set(0,0,0); inspCam?.position.set(0,inspRadius*0.8,inspRadius*2.2); });
-
-/* ---------- Start ---------- */
-const bodyOrder = ['Mercury','Venus','Earth','Moon','Mars','Jupiter','Saturn','Uranus','Neptune'];
-function firstPlanet(){ return planetMeshesByName['Saturn'] || planetMeshesByName['Earth'] || planets[0]; }
-window.addEventListener('load', ()=>{ const m = firstPlanet(); if(m) onSelectBody(m); });
-</script>
+<p class="p1"><span class="s1">&lt;!DOCTYPE html&gt;</span></p>
+<p class="p1"><span class="s1">&lt;html lang="en"&gt;</span></p>
+<p class="p1"><span class="s1">&lt;head&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;title&gt;Mission Vista — Solar System (Debug)&lt;/title&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- Tailwind (UI only) --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- Fonts --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- Three.js + OrbitControls --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"&gt;&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"&gt;&lt;/script&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;style&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>html,body { height:100%; margin:0; background:#000; font-family:'Inter',sans-serif; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>canvas { display:block; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#hud {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>position: absolute; top: 12px; right: 12px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>background: rgba(0,0,0,.6); color:#fff; font-size:12px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>padding:8px 10px; border-radius:10px; border:1px solid #334155;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>z-index: 10;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#planetName {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>position: absolute; top: 12px; left: 12px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>background: rgba(0,0,0,.6); color:#fff; font-size:16px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>padding:10px 14px; border-radius:12px; border:1px solid #334155;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>z-index: 10;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#inspectOverlay {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>position:fixed; inset:0; background:rgba(0,0,0,0.85);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>display:none; align-items:center; justify-content:center; z-index:9999;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#inspectPanel {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>width:min(92vw, 1000px); height:min(86vh, 700px);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>background:#0b1020; border:1px solid rgba(255,255,255,.12);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>border-radius:12px; display:flex; flex-direction:column; overflow:hidden;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#inspectHeader {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>background:#111936; color:#eaf2ff; padding:10px 14px; font-weight:700;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #223058;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#inspectCanvas { flex:1; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.btn {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>padding:.45rem .65rem; border-radius:.65rem; font-size:.85rem;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>background: #2563eb; color:#fff;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/head&gt;</span></p>
+<p class="p1"><span class="s1">&lt;body&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div id="planetName"&gt;Click a planet&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div id="hud"&gt;tick: &lt;span id="tick"&gt;0&lt;/span&gt; • objects: &lt;span id="objs"&gt;0&lt;/span&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;button id="inspectBtn" class="btn" style="position:absolute; top:60px; left:12px; display:none; z-index:10;"&gt;Inspect&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- Inspect modal --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div id="inspectOverlay"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div id="inspectPanel"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div id="inspectHeader"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;span id="inspectTitle"&gt;Inspect&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;button id="closeInspect" class="btn" style="background:#dc2626"&gt;Close&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div id="inspectCanvas"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Scene setup ---</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const scene = new THREE.Scene();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 5000);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>camera.position.set(0, 20, 80);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const renderer = new THREE.WebGLRenderer({ antialias:true });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>renderer.setSize(window.innerWidth, window.innerHeight);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>renderer.setClearColor(0x000000, 1);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>document.body.appendChild(renderer.domElement);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const controls = new THREE.OrbitControls(camera, renderer.domElement);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>controls.enableDamping = true;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Lights + a bright SUN mesh so we always see *something* ---</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const hemi = new THREE.HemisphereLight(0xbfdfff, 0x080820, 0.4);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>scene.add(hemi);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const sunLight = new THREE.PointLight(0xffffff, 2.0, 0);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>sunLight.position.set(0, 0, 0);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>scene.add(sunLight);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const sunGeo = new THREE.SphereGeometry(3, 64, 64);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const sunMat = new THREE.MeshBasicMaterial({ color: 0xfff5cc });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const sun = new THREE.Mesh(sunGeo, sunMat);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>scene.add(sun); // if you see this glowing ball, rendering is fine</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- A small starfield (faint) so background isn't pitch black ---</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>(function makeStars() {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const stars = 2000;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const pts = new Float32Array(stars * 3);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>for (let i = 0; i &lt; stars; i++) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const r = 800 + Math.random()*400;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const theta = Math.random()*Math.PI*2, phi = Math.acos(2*Math.random()-1);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const x = r * Math.sin(phi) * Math.cos(theta);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const y = r * Math.sin(phi) * Math.sin(theta);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const z = r * Math.cos(phi);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>pts[i*3+0] = x; pts[i*3+1] = y; pts[i*3+2] = z;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const g = new THREE.BufferGeometry();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>g.setAttribute('position', new THREE.BufferAttribute(pts, 3));</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const m = new THREE.PointsMaterial({ color: 0x89d4ff, size: 1, sizeAttenuation: true, transparent: true, opacity: 0.7 });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const p = new THREE.Points(g, m);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>scene.add(p);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>})();</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Texture helper (local-first; fallback to color) ---</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const loader = new THREE.TextureLoader();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function loadTex(url, onOK, onFail) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>loader.load(url, (t) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if ('colorSpace' in t) t.colorSpace = THREE.SRGBColorSpace;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>onOK(t);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}, undefined, (err) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>console.warn('Texture failed:', url, err);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>onFail &amp;&amp; onFail();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function colorMaterial(hex) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>return new THREE.MeshPhongMaterial({ color: hex, specular: 0x222222, shininess: 8 });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Planets data (uses your local textures/) ---</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const planetsData = [</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Mercury', size:1.2, dist:8,<span class="Apple-converted-space">  </span>map:'textures/mercury.jpg', color:0x888888, orbit:0.020, spin:0.010 },</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Venus', <span class="Apple-converted-space">  </span>size:1.4, dist:12, map:'textures/venus.jpg', <span class="Apple-converted-space">  </span>color:0xe5bd9a, orbit:0.015, spin:-0.004 },</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Earth', <span class="Apple-converted-space">  </span>size:1.5, dist:16, map:'textures/earth.jpg', <span class="Apple-converted-space">  </span>color:0x2e74c8, orbit:0.012, spin:0.015 },</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Moon',<span class="Apple-converted-space">    </span>size:0.5, dist:18, map:'textures/moon.jpg',<span class="Apple-converted-space">    </span>color:0xaaaaaa, orbit:0.018, spin:0.012 },</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Mars',<span class="Apple-converted-space">    </span>size:1.3, dist:22, map:'textures/mars.jpg',<span class="Apple-converted-space">    </span>color:0xb44b32, orbit:0.010, spin:0.012 },</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Jupiter', size:3.0, dist:32, map:'textures/jupiter.jpg', color:0xd2b48c, orbit:0.006, spin:0.030 },</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Saturn',<span class="Apple-converted-space">  </span>size:2.6, dist:40, map:'textures/saturn.jpg',<span class="Apple-converted-space">  </span>color:0xead6a4, orbit:0.005, spin:0.026 },</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Uranus',<span class="Apple-converted-space">  </span>size:2.2, dist:48, map:'textures/uranus.jpg',<span class="Apple-converted-space">  </span>color:0x7fcfd6, orbit:0.004, spin:-0.022 },</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Neptune', size:2.0, dist:56, map:'textures/neptune.jpg', color:0x3455d1, orbit:0.003, spin:0.020 },</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>];</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const planets = [];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const planetMeshes = {};</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const planetNameEl = document.getElementById('planetName');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const inspectBtn = document.getElementById('inspectBtn');</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function makePlanet(p) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const geo = new THREE.SphereGeometry(p.size, 64, 64);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const mat = colorMaterial(p.color); // temp while texture loads</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const mesh = new THREE.Mesh(geo, mat);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>mesh.userData = { ...p, angle: Math.random()*Math.PI*2 };</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>// start somewhere on the orbit</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>mesh.position.set(p.dist, 0, 0);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>scene.add(mesh);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>planets.push(mesh);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>planetMeshes[p.name] = mesh;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>// load texture</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>loadTex(p.map, (t) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>mat.map = t;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>mat.needsUpdate = true;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>console.log('Loaded:', p.name, p.map);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}, () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>console.log('Using color fallback for', p.name);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>planetsData.forEach(makePlanet);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Raycaster for selection ---</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const raycaster = new THREE.Raycaster();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const mouse = new THREE.Vector2();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let selectedPlanet = null;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>window.addEventListener('click', (event) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>mouse.x = (event.clientX / window.innerWidth) * 2 - 1;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>raycaster.setFromCamera(mouse, camera);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const hits = raycaster.intersectObjects(planets, true);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>if (hits.length) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>selectedPlanet = hits[0].object;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>planetNameEl.textContent = selectedPlanet.userData.name;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspectBtn.style.display = 'inline-block';</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>});</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Inspect modal setup ---</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const inspectOverlay = document.getElementById('inspectOverlay');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const closeInspect = document.getElementById('closeInspect');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const inspectTitle = document.getElementById('inspectTitle');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const inspectCanvas = document.getElementById('inspectCanvas');</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let inspRenderer, inspScene, inspCam, inspControls, inspMesh, inspRAF=0;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>document.getElementById('inspectBtn').addEventListener('click', () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>if (!selectedPlanet) return;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>inspectTitle.textContent = "Inspect: " + selectedPlanet.userData.name;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>inspectOverlay.style.display = 'flex';</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>if (!inspRenderer) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspRenderer = new THREE.WebGLRenderer({ antialias: true });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if ('outputColorSpace' in inspRenderer) inspRenderer.outputColorSpace = THREE.SRGBColorSpace;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspRenderer.setSize(10, 10); // placeholder; ResizeObserver adjusts below</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspectCanvas.innerHTML = '';</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspectCanvas.appendChild(inspRenderer.domElement);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspScene = new THREE.Scene();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspScene.add(new THREE.AmbientLight(0xffffff, 1));</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const dl = new THREE.DirectionalLight(0xffffff, 1.2);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>dl.position.set(4, 2, 6);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspScene.add(dl);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspCam = new THREE.PerspectiveCamera(55, 1, 0.01, 2000);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspCam.position.set(0, 0, 3);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspControls = new THREE.OrbitControls(inspCam, inspRenderer.domElement);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspControls.enableDamping = true;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>new ResizeObserver(() =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>const w = inspectCanvas.clientWidth, h = inspectCanvas.clientHeight;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>inspRenderer.setSize(w, h, false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>inspCam.aspect = Math.max(1e-3, w / Math.max(1, h));</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>inspCam.updateProjectionMatrix();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}).observe(inspectCanvas);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>// replace mesh</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>if (inspMesh) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspScene.remove(inspMesh);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspMesh.geometry.dispose();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspMesh.material.map?.dispose();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspMesh.material.dispose();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspMesh = null;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const geo = new THREE.SphereGeometry(1.2, 96, 72);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x222222, shininess: 10 });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>inspMesh = new THREE.Mesh(geo, mat);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>inspScene.add(inspMesh);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>// load same texture into inspector</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>loadTex(selectedPlanet.userData.map, (t) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>mat.map = t; mat.needsUpdate = true;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>});</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>cancelAnimationFrame(inspRAF);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const loop = () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspRAF = requestAnimationFrame(loop);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspMesh.rotation.y += 0.01;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspControls.update();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspRenderer.render(inspScene, inspCam);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>};</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>loop();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>});</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>document.getElementById('closeInspect').addEventListener('click', () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>inspectOverlay.style.display = 'none';</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>cancelAnimationFrame(inspRAF);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>});</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Animation + Debug HUD ---</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const tickEl = document.getElementById('tick');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const objsEl = document.getElementById('objs');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let tick = 0;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function animate() {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>requestAnimationFrame(animate);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>tick++;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>// orbits + spin</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>planets.forEach((p) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const d = p.userData.dist;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>p.userData.angle += p.userData.orbit;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>p.position.x = Math.cos(p.userData.angle) * d;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>p.position.z = Math.sin(p.userData.angle) * d;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>p.rotation.y += p.userData.spin;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>controls.update();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>renderer.render(scene, camera);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>if ((tick &amp; 15) === 0) { // update HUD every ~16 frames</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>tickEl.textContent = String(tick);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>objsEl.textContent = String(scene.children.length);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>animate();</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Resize ---</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>window.addEventListener('resize', () =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const w = window.innerWidth, h = window.innerHeight;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>camera.aspect = w / Math.max(1, h);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>camera.updateProjectionMatrix();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>renderer.setSize(w, h, false);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>});</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// Aim camera</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>camera.lookAt(0,0,0);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/body&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/html&gt;</span></p>
 </body>
 </html>
-
-
-
