@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Mission Vista — Home + Solar System Explorer</title>
+<title>Mission Vista — Solar System Explorer</title>
 
 <!-- Tailwind (UI only) -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -16,7 +16,7 @@
 <!-- Three.js -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
-<!-- OpenSeadragon -->
+<!-- OpenSeadragon (for the simple deep-zoom tab) -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.1/openseadragon.min.css" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.1/openseadragon.min.js" crossorigin="anonymous"></script>
 
@@ -71,16 +71,12 @@ header{backdrop-filter:blur(10px);background-color:rgba(10,10,30,0.4);position:s
   <section class="py-24 bg-black/30">
     <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center px-6">
       <div class="flex justify-center">
-        <img src="logo.png" alt="Fantastic Four Logo" class="max-h-64 rounded-xl shadow-lg"/>
+        <img src="logo.png" alt="Team Logo" class="max-h-64 rounded-xl shadow-lg"/>
       </div>
       <div class="text-left space-y-6">
         <h3 class="text-3xl font-semibold mb-2">Our Project</h3>
-        <p class="text-2xl font-semibold">The Fantastic Four</p>
-        <p>Born from a group of friends at Chapel School (Brazil), we took NASA Space Apps as a chance to push our creativity and build something people can explore and learn from.</p>
         <p>Click <em>Solar System</em> to try our two modes: <span class="font-semibold">3D Planets</span> and a minimal <span class="font-semibold">Deep Zoom</span> viewer.</p>
-        <div>
-          <button data-goto="explorer" class="btn mt-2" aria-label="Open the Solar System Explorer">Open the Solar System Explorer →</button>
-        </div>
+        <div><button data-goto="explorer" class="btn mt-2">Open the Solar System Explorer →</button></div>
       </div>
     </div>
   </section>
@@ -88,21 +84,21 @@ header{backdrop-filter:blur(10px);background-color:rgba(10,10,30,0.4);position:s
 
 <section id="explorer" class="hidden relative">
   <div class="glass fixed top-3 left-1/2 -translate-x-1/2 nav-top-fix rounded-2xl px-3 py-2 z-[9999] flex items-center gap-3">
-    <button data-goto="home" class="btn" title="Back to Home" aria-label="Back to Home">← Home</button>
+    <button data-goto="home" class="btn" title="Back to Home">← Home</button>
     <div class="font-semibold tracking-wide">Space Explorer</div>
     <div class="ml-2 flex gap-2">
-      <button id="tabPlanets" class="btn btn-primary" aria-label="3D Planets">3D Planets</button>
-      <button id="tabZoom" class="btn" aria-label="Deep Zoom">Deep Zoom</button>
+      <button id="tabPlanets" class="btn btn-primary">3D Planets</button>
+      <button id="tabZoom" class="btn">Deep Zoom</button>
     </div>
     <div class="ml-2 flex items-center gap-2">
       <label class="text-xs opacity-80" for="bodySelect">Body</label>
-      <select id="bodySelect" class="bg-transparent border border-slate-600 rounded-xl p-1 px-2 text-xs" aria-label="Select celestial body">
+      <select id="bodySelect" class="bg-transparent border border-slate-600 rounded-xl p-1 px-2 text-xs">
         <option>Mercury</option><option>Venus</option><option>Earth</option><option>Mars</option>
         <option>Jupiter</option><option selected>Saturn</option><option>Uranus</option><option>Neptune</option>
       </select>
     </div>
-    <button id="inspectBtn" class="btn hidden" aria-label="Inspect">Inspect</button>
-    <button id="stopFollowBtn" class="btn hidden" aria-label="Stop following">Stop following</button>
+    <button id="inspectBtn" class="btn hidden">Inspect</button>
+    <button id="stopFollowBtn" class="btn hidden">Stop following</button>
   </div>
 
   <!-- 3D Planets view -->
@@ -123,9 +119,9 @@ header{backdrop-filter:blur(10px);background-color:rgba(10,10,30,0.4);position:s
     <div class="glass absolute left-3 top-16 bottom-3 w-64 z-30 rounded-2xl p-3 flex flex-col gap-3">
       <div class="text-sm font-semibold mb-1">Layers</div>
       <div class="grid grid-cols-1 gap-2">
-        <button class="btn btn-primary" data-layer="earth" aria-label="Blue Marble">Blue Marble</button>
-        <button class="btn" data-layer="mars" aria-label="Mars (Viking)">Mars (Viking)</button>
-        <button class="btn" data-layer="moon" aria-label="Moon (LRO)">Moon (LRO)</button>
+        <button class="btn btn-primary" data-layer="earth">Blue Marble</button>
+        <button class="btn" data-layer="mars">Mars (Viking)</button>
+        <button class="btn" data-layer="moon">Moon (LRO)</button>
       </div>
       <hr class="border-slate-700/50 my-1">
       <div class="text-[11px] opacity-70">Drag to move • Scroll to zoom</div>
@@ -135,10 +131,10 @@ header{backdrop-filter:blur(10px);background-color:rgba(10,10,30,0.4);position:s
 </section>
 
 <footer class="p-6 text-center text-gray-500 text-sm">
-  Built for the NASA Space Apps Challenge 2025 🚀 | Team Fantastic Four
+  Built for the NASA Space Apps Challenge 🚀
 </footer>
 
-<!-- OrbitControls-lite -->
+<!-- OrbitControls-lite (inline, no external deps) -->
 <script>
 class OrbitControlsLite {
   constructor(object, domElement){
@@ -235,27 +231,32 @@ const planetNameEl = document.getElementById('planetName'); const statsEl = docu
 const inspectBtn = document.getElementById('inspectBtn'); const stopFollowBtn = document.getElementById('stopFollowBtn');
 function setStats(t){ statsEl.textContent = t||''; } function fmt(n){ return typeof n==='number'? n.toLocaleString() : n; }
 
-// ---------- Textures ----------
+// ---------- Textures (Wikimedia = CORS-safe) ----------
 const texLoader = new THREE.TextureLoader(); texLoader.crossOrigin = 'anonymous';
 function maxAniso(){ return renderer.capabilities.getMaxAnisotropy?.() || 8; }
 function loadFromList(urls, ok, fail){
-  let i=0; const tryNext=()=>{ if(i>=urls.length){ fail&&fail(); return; }
-    const u=urls[i++]; texLoader.load(u, t=>{ t.anisotropy=maxAniso(); if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding; ok(t,u); }, undefined, tryNext);
+  let i=0;
+  const tryNext=()=>{ if(i>=urls.length){ console.warn("All texture URLs failed:", urls); fail&&fail(); return; }
+    const u=urls[i++]; console.log("Loading texture:", u);
+    texLoader.load(u, t=>{ console.log("✅ Loaded:", u);
+      t.anisotropy=maxAniso(); if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding;
+      ok(t,u);
+    }, undefined, (err)=>{ console.warn("❌ Failed:", u, err); tryNext(); });
   }; tryNext();
 }
 function colorTexture(hex=0x777777){ const c=document.createElement('canvas'); c.width=c.height=2; const x=c.getContext('2d'); x.fillStyle='#'+hex.toString(16).padStart(6,'0'); x.fillRect(0,0,2,2); const t=new THREE.CanvasTexture(c); t.anisotropy=maxAniso(); if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding; return t; }
 
-/* Astropedia/Blue Marble for rocky bodies; examples for giants */
+/* CORS-safe, equirectangular planet textures */
 const TEXSRC = {
-  mercury:["https://astrogeology.usgs.gov/ckan/dataset/3599a192-1df1-49c7-a328-f5936df16155/resource/8b1ccce0-3d79-490f-85f6-3f78de377c96/download/mercury_messenger_mdis_basemap_enhancedcolor_mosaic_global_512.jpg"],
-  venus:["https://astrogeology.usgs.gov/ckan/dataset/128fc727-4864-4086-bf74-651d6108ce02/resource/cfd6d6ed-8d95-4409-a3a6-b7a1046cbef4/download/venus_magellan_c3-mdir_colorized_global_mosaic_512.jpg"],
-  earth:["https://neo.gsfc.nasa.gov/archive/bluemarble/bmng/world_8km/world.topo.bathy.200412.3x5400x2700.jpg"],
-  moon:["https://astrogeology.usgs.gov/ckan/dataset/db948a2d-4d6a-4775-a0d3-12613d36f9e7/resource/addbb065-8435-43d7-a7b0-99da43b7a0fa/download/moon_lro_lroc-wac_mosaic_global_512.jpg"],
-  mars:["https://astrogeology.usgs.gov/ckan/dataset/7131d503-cdc9-45a5-8f83-5126c0fd397e/resource/5ea881c6-01b3-41fa-a7af-42d2131b54f1/download/mars_viking_mdim21_clrmosaic_1km.jpg"],
-  jupiter:["https://threejs.org/examples/textures/planets/jupiter.jpg"],
-  saturn:["https://threejs.org/examples/textures/planets/saturn.jpg"],
-  uranus:["https://threejs.org/examples/textures/planets/uranus.jpg"],
-  neptune:["https://threejs.org/examples/textures/planets/neptune.jpg"]
+  mercury: ["https://upload.wikimedia.org/wikipedia/commons/2/2c/Mercury_global_map_MESSENGER_mosaic_enhanced_color.jpg"],
+  venus:   ["https://upload.wikimedia.org/wikipedia/commons/8/85/Venus_RGB_Map_1800x900.jpg"],
+  earth:   ["https://upload.wikimedia.org/wikipedia/commons/5/5f/Blue_Marble_2002.png"],
+  moon:    ["https://upload.wikimedia.org/wikipedia/commons/5/5e/Moon_map_LRO_WAC_Poles_1k.jpg"],
+  mars:    ["https://upload.wikimedia.org/wikipedia/commons/0/02/Mars_Viking_MDIM21_1km_plus_poles.jpg"],
+  jupiter: ["https://upload.wikimedia.org/wikipedia/commons/5/5a/Jupiter_map_by_Askaniy.jpg"],
+  saturn:  ["https://upload.wikimedia.org/wikipedia/commons/f/f0/Saturn_map_by_Askaniy.png"],
+  uranus:  ["https://upload.wikimedia.org/wikipedia/commons/3/3d/Solarsystemscope_texture_2k_uranus.jpg"],
+  neptune: ["https://upload.wikimedia.org/wikipedia/commons/5/56/Solarsystemscope_texture_2k_neptune.jpg"]
 };
 function textureCandidatesFor(key){ return TEXSRC[key]||[]; }
 
@@ -406,7 +407,7 @@ animate();
 const bodySelect=document.getElementById('bodySelect');
 bodySelect.addEventListener('change',()=>{ const name=bodySelect.value; const mesh=planetMeshesByName[name]; if(mesh) onSelectBody(mesh); });
 
-// Inspect modal (minimal)
+// Inspect modal
 const inspectOverlay=document.createElement('div'); inspectOverlay.id='inspectOverlay'; inspectOverlay.innerHTML=`
   <div id="inspectPanel">
     <div id="inspectHeader">
@@ -421,7 +422,9 @@ const inspectOverlay=document.createElement('div'); inspectOverlay.id='inspectOv
   </div>`;
 document.body.appendChild(inspectOverlay);
 let inspRenderer,inspScene,inspCam,inspControls,inspMesh,inspRings=null,inspRAF=0,inspRadius=1;
-const inspectTitle=inspectOverlay.querySelector('#inspectTitle'), spinToggle=inspectOverlay.querySelector('#spinToggle'), resetInspectCam=inspectOverlay.querySelector('#resetInspectCam'), closeInspect=inspectOverlay.querySelector('#closeInspect'), inspectCanvas=document.getElementById('inspectCanvas');
+const inspectTitle=inspectOverlay.querySelector('#inspectTitle'), spinToggle=inspectOverlay.querySelector('#spinToggle'), resetInspectCam=inspectOverlay.querySelector('#resetInspectCam'), closeInspect=inspectOverlay.querySelector('#closeInspect'), inspectCanvas=document.createElement('div');
+inspectCanvas.id='inspectCanvas'; document.getElementById('inspectBody').appendChild(inspectCanvas);
+
 function openInspect(name){
   inspectTitle.textContent=`Inspect: ${name}`; inspectOverlay.style.display='flex';
   if(!inspRenderer){
@@ -448,10 +451,10 @@ function openInspect(name){
   const tick=()=>{ inspRAF=requestAnimationFrame(tick); if(spinToggle.checked){ inspMesh.rotation.y+=0.01; } inspControls.update(); inspRenderer.render(inspScene,inspCam); };
   cancelAnimationFrame(inspRAF); tick();
 }
-inspectOverlay.addEventListener('click',(e)=>{ if(e.target===inspectOverlay) closeInspect.click(); });
-closeInspect.addEventListener('click',()=>{ inspectOverlay.style.display='none'; cancelAnimationFrame(inspRAF); });
-resetInspectCam.addEventListener('click',()=>{ if(!inspControls) return; inspControls.target.set(0,0,0); inspCam.position.set(0,inspRadius*0.8,inspRadius*2.2); });
 document.getElementById('inspectBtn').addEventListener('click',()=>{ if(followedBody) openInspect(followedBody.userData?.name||'Object'); });
+document.getElementById('inspectOverlay').addEventListener('click',(e)=>{ if(e.target.id==='inspectOverlay') document.getElementById('closeInspect').click(); });
+document.getElementById('closeInspect').addEventListener('click',()=>{ document.getElementById('inspectOverlay').style.display='none'; cancelAnimationFrame(inspRAF); });
+document.getElementById('resetInspectCam').addEventListener('click',()=>{ if(!inspControls) return; inspControls.target.set(0,0,0); inspCam.position.set(0,inspRadius*0.8,inspRadius*2.2); });
 
 // Tabs + Deep Zoom
 const viewPlanets=document.getElementById('view-planets');
@@ -467,15 +470,12 @@ let viewer=null; let lastLayer='earth';
 function ensureViewer(){ if(viewer) return viewer; viewer=OpenSeadragon({ id:'viewer', prefixUrl:'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.1/images/', showNavigator:true, maxZoomPixelRatio:4, showRotationControl:false, gestureSettingsMouse:{ clickToZoom:true, dblClickToZoom:true } }); return viewer; }
 const DZ_SOURCES={
   earth:{type:'image',url:'https://upload.wikimedia.org/wikipedia/commons/8/86/Blue_Marble_2002.png'},
-  mars:{type:'image',url:'https://threejs.org/examples/textures/planets/mars_1k_color.jpg'},
-  moon:{type:'image',url:'https://threejs.org/examples/textures/planets/moon_1024.jpg'}
+  mars:{type:'image',url:'https://upload.wikimedia.org/wikipedia/commons/0/02/Mars_Viking_MDIM21_1km_plus_poles.jpg'},
+  moon:{type:'image',url:'https://upload.wikimedia.org/wikipedia/commons/5/5e/Moon_map_LRO_WAC_Poles_1k.jpg'}
 };
 function loadLayer(key){ lastLayer=key; ensureViewer().open(DZ_SOURCES[key]); }
-document.querySelectorAll('[data-layer]').forEach(btn=>{
-  btn.addEventListener('click',()=>{ document.querySelectorAll('[data-layer]').forEach(b=>b.classList.remove('btn-primary')); btn.classList.add('btn-primary'); loadLayer(btn.dataset.layer); });
-});
 
-// Start at Home and wire default focus
+// Start at Home; auto-focus default planet on load
 showSection('home');
 window.addEventListener('load', ()=>{ const mesh = planetMeshesByName[document.getElementById('bodySelect').value]; if(mesh) onSelectBody(mesh); });
 </script>
