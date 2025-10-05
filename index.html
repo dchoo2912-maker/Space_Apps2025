@@ -70,13 +70,10 @@ header{backdrop-filter:blur(10px);background-color:rgba(10,10,30,0.4);position:s
 
   <section class="py-24 bg-black/30">
     <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center px-6">
-      <div class="flex justify-center">
-        <img src="logo.png" alt="Team Logo" class="max-h-64 rounded-xl shadow-lg"/>
-      </div>
       <div class="text-left space-y-6">
         <h3 class="text-3xl font-semibold mb-2">Our Project</h3>
         <p>Click <em>Solar System</em> to try our two modes: <span class="font-semibold">3D Planets</span> and a minimal <span class="font-semibold">Deep Zoom</span> viewer.</p>
-        <div><button data-goto="explorer" class="btn mt-2" aria-label="Open the Solar System Explorer">Open the Solar System Explorer →</button></div>
+        <div><button data-goto="explorer" class="btn mt-2">Open the Solar System Explorer →</button></div>
       </div>
     </div>
   </section>
@@ -84,21 +81,21 @@ header{backdrop-filter:blur(10px);background-color:rgba(10,10,30,0.4);position:s
 
 <section id="explorer" class="hidden relative">
   <div class="glass fixed top-3 left-1/2 -translate-x-1/2 nav-top-fix rounded-2xl px-3 py-2 z-[9999] flex items-center gap-3">
-    <button data-goto="home" class="btn" title="Back to Home" aria-label="Back to Home">← Home</button>
+    <button data-goto="home" class="btn" title="Back to Home">← Home</button>
     <div class="font-semibold tracking-wide">Space Explorer</div>
     <div class="ml-2 flex gap-2">
-      <button id="tabPlanets" class="btn btn-primary" aria-label="3D Planets">3D Planets</button>
-      <button id="tabZoom" class="btn" aria-label="Deep Zoom">Deep Zoom</button>
+      <button id="tabPlanets" class="btn btn-primary">3D Planets</button>
+      <button id="tabZoom" class="btn">Deep Zoom</button>
     </div>
     <div class="ml-2 flex items-center gap-2">
       <label class="text-xs opacity-80" for="bodySelect">Body</label>
-      <select id="bodySelect" class="bg-transparent border border-slate-600 rounded-xl p-1 px-2 text-xs" aria-label="Select celestial body">
+      <select id="bodySelect" class="bg-transparent border border-slate-600 rounded-xl p-1 px-2 text-xs">
         <option>Mercury</option><option>Venus</option><option>Earth</option><option>Mars</option>
         <option>Jupiter</option><option selected>Saturn</option><option>Uranus</option><option>Neptune</option>
       </select>
     </div>
-    <button id="inspectBtn" class="btn hidden" aria-label="Inspect">Inspect</button>
-    <button id="stopFollowBtn" class="btn hidden" aria-label="Stop following">Stop following</button>
+    <button id="inspectBtn" class="btn hidden">Inspect</button>
+    <button id="stopFollowBtn" class="btn hidden">Stop following</button>
   </div>
 
   <!-- 3D Planets view -->
@@ -119,9 +116,9 @@ header{backdrop-filter:blur(10px);background-color:rgba(10,10,30,0.4);position:s
     <div class="glass absolute left-3 top-16 bottom-3 w-64 z-30 rounded-2xl p-3 flex flex-col gap-3">
       <div class="text-sm font-semibold mb-1">Layers</div>
       <div class="grid grid-cols-1 gap-2">
-        <button class="btn btn-primary" data-layer="earth" aria-label="Blue Marble">Blue Marble</button>
-        <button class="btn" data-layer="mars" aria-label="Mars (Viking)">Mars (Viking)</button>
-        <button class="btn" data-layer="moon" aria-label="Moon (LRO)">Moon (LRO)</button>
+        <button class="btn btn-primary" data-layer="earth">Blue Marble</button>
+        <button class="btn" data-layer="mars">Mars (Viking)</button>
+        <button class="btn" data-layer="moon">Moon (LRO)</button>
       </div>
       <hr class="border-slate-700/50 my-1">
       <div class="text-[11px] opacity-70">Drag to move • Scroll to zoom</div>
@@ -134,7 +131,7 @@ header{backdrop-filter:blur(10px);background-color:rgba(10,10,30,0.4);position:s
   Built for the NASA Space Apps Challenge 🚀
 </footer>
 
-<!-- OrbitControls-lite (inline, no external deps) -->
+<!-- OrbitControls-lite (inline) -->
 <script>
 class OrbitControlsLite {
   constructor(object, domElement){
@@ -231,59 +228,283 @@ const planetNameEl = document.getElementById('planetName'); const statsEl = docu
 const inspectBtn = document.getElementById('inspectBtn'); const stopFollowBtn = document.getElementById('stopFollowBtn');
 function setStats(t){ statsEl.textContent = t||''; } function fmt(n){ return typeof n==='number'? n.toLocaleString() : n; }
 
-// ---------- Textures (Wikimedia = CORS-safe) ----------
+// ---------- Textures (local-first with Wikimedia fallbacks) ----------
 const texLoader = new THREE.TextureLoader(); texLoader.crossOrigin = 'anonymous';
 function maxAniso(){ return renderer.capabilities.getMaxAnisotropy?.() || 8; }
+
 function loadFromList(urls, ok, fail){
   let i=0;
-  const tryNext=()=>{ 
-    if(i>=urls.length){ 
-      console.warn("All texture URLs failed:", urls); 
-      fail&&fail(); 
-      return; 
-    }
-    const u=urls[i++]; 
-    console.log("Loading texture:", u);
-    texLoader.load(u, t=>{
-      console.log("✅ Loaded:", u);
-      t.anisotropy=maxAniso(); 
-      if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding;
+  const tryNext=()=>{ if(i>=urls.length){ console.warn("All texture URLs failed:", urls); fail&&fail(); return; }
+    const u=urls[i++]; console.log("Loading texture:", u);
+    texLoader.load(u, t=>{ console.log("✅ Loaded:", u);
+      t.anisotropy=maxAniso(); if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding;
       ok(t,u);
-    }, undefined, (err)=>{
-      console.warn("❌ Failed:", u, err); 
-      tryNext();
-    });
-  }; 
-  tryNext();
+    }, undefined, (err)=>{ console.warn("❌ Failed:", u, err); tryNext(); });
+  }; tryNext();
 }
-function colorTexture(hex=0x777777){ 
-  const c=document.createElement('canvas'); c.width=c.height=2; 
-  const x=c.getContext('2d'); 
-  x.fillStyle='#'+hex.toString(16).padStart(6,'0'); 
-  x.fillRect(0,0,2,2); 
-  const t=new THREE.CanvasTexture(c); 
-  t.anisotropy=maxAniso(); 
-  if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding; 
-  return t; 
-}
+function colorTexture(hex=0x777777){ const c=document.createElement('canvas'); c.width=c.height=2; const x=c.getContext('2d'); x.fillStyle='#'+hex.toString(16).padStart(6,'0'); x.fillRect(0,0,2,2); const t=new THREE.CanvasTexture(c); t.anisotropy=maxAniso(); if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding; return t; }
 
-/* CORS-safe, equirectangular planet textures */
+/* Local same-origin first; if missing, use Wikimedia */
 const TEXSRC = {
-  mercury: ["https://upload.wikimedia.org/wikipedia/commons/2/2c/Mercury_global_map_MESSENGER_mosaic_enhanced_color.jpg"],
-  venus:   ["https://upload.wikimedia.org/wikipedia/commons/8/85/Venus_RGB_Map_1800x900.jpg"],
-  earth:   ["https://upload.wikimedia.org/wikipedia/commons/5/5f/Blue_Marble_2002.png"],
-  moon:    ["https://upload.wikimedia.org/wikipedia/commons/5/5e/Moon_map_LRO_WAC_Poles_1k.jpg"],
-  mars:    ["https://upload.wikimedia.org/wikipedia/commons/0/02/Mars_Viking_MDIM21_1km_plus_poles.jpg"],
-  jupiter: ["https://upload.wikimedia.org/wikipedia/commons/5/5a/Jupiter_map_by_Askaniy.jpg"],
-  saturn:  ["https://upload.wikimedia.org/wikipedia/commons/f/f0/Saturn_map_by_Askaniy.png"],
-  uranus:  ["https://upload.wikimedia.org/wikipedia/commons/3/3d/Solarsystemscope_texture_2k_uranus.jpg"],
-  neptune: ["https://upload.wikimedia.org/wikipedia/commons/5/56/Solarsystemscope_texture_2k_neptune.jpg"]
+  mercury: ["images/mercury.jpg","https://upload.wikimedia.org/wikipedia/commons/2/2c/Mercury_global_map_MESSENGER_mosaic_enhanced_color.jpg"],
+  venus:   ["images/venus.jpg","https://upload.wikimedia.org/wikipedia/commons/8/85/Venus_RGB_Map_1800x900.jpg"],
+  earth:   ["images/earth.jpg","https://upload.wikimedia.org/wikipedia/commons/5/5f/Blue_Marble_2002.png"],
+  moon:    ["images/moon.jpg","https://upload.wikimedia.org/wikipedia/commons/5/5e/Moon_map_LRO_WAC_Poles_1k.jpg"],
+  mars:    ["images/mars.jpg","https://upload.wikimedia.org/wikipedia/commons/0/02/Mars_Viking_MDIM21_1km_plus_poles.jpg"],
+  jupiter: ["images/jupiter.jpg","https://upload.wikimedia.org/wikipedia/commons/5/5a/Jupiter_map_by_Askaniy.jpg"],
+  saturn:  ["images/saturn.jpg","https://upload.wikimedia.org/wikipedia/commons/f/f0/Saturn_map_by_Askaniy.png"],
+  uranus:  ["images/uranus.jpg","https://upload.wikimedia.org/wikipedia/commons/3/3d/Solarsystemscope_texture_2k_uranus.jpg"],
+  neptune: ["images/neptune.jpg","https://upload.wikimedia.org/wikipedia/commons/5/56/Solarsystemscope_texture_2k_neptune.jpg"]
 };
 function textureCandidatesFor(key){ return TEXSRC[key]||[]; }
 
-// ...rest of your code remains unchanged...
-// (The rest of the code is already robust and includes all the improvements discussed above.)
+// ---------- System (with axial spin) ----------
+const planetDefs = [
+  {name:'Mercury', radius:0.38, dist:5, orbitSpeed:0.040, tiltDeg:0.03, key:'mercury', color:0x9aa0a6, spinHours:1407.5},
+  {name:'Venus', radius:0.95, dist:7, orbitSpeed:0.015, tiltDeg:177.4, key:'venus', color:0xe5bd9a, spinHours:-5832.5},
+  {name:'Earth', radius:1.00, dist:10, orbitSpeed:0.010, tiltDeg:23.4, key:'earth', color:0x2e74c8, spinHours:24},
+  {name:'Mars', radius:0.53, dist:15, orbitSpeed:0.0053, tiltDeg:25.2, key:'mars', color:0xb44b32, spinHours:24.6},
+  {name:'Jupiter', radius:1.50, dist:25, orbitSpeed:0.00084, tiltDeg:3.1, key:'jupiter', color:0xd2b48c, spinHours:9.9},
+  {name:'Saturn', radius:1.20, dist:35, orbitSpeed:0.00034, tiltDeg:26.7, key:'saturn', color:0xead6a4, spinHours:10.7},
+  {name:'Uranus', radius:1.00, dist:45, orbitSpeed:0.00012, tiltDeg:97.8, key:'uranus', color:0x7fcfd6, spinHours:-17.2},
+  {name:'Neptune', radius:1.00, dist:55, orbitSpeed:0.00006, tiltDeg:28.3, key:'neptune', color:0x3455d1, spinHours:16.1}
+];
+const INFO = {
+  Mercury:{radiusKm:2440,yearDays:88,dayHours:1407.5,moons:0,summary:"Cratered, airless world."},
+  Venus:{radiusKm:6052,yearDays:225,dayHours:5832.5,moons:0,summary:"Hottest planet; thick clouds; retrograde spin."},
+  Earth:{radiusKm:6371,yearDays:365,dayHours:24,moons:1,summary:"Oceans, continents, dynamic weather."},
+  Mars:{radiusKm:3390,yearDays:687,dayHours:24.6,moons:2,summary:"Rust deserts, canyons, shield volcanoes."},
+  Jupiter:{radiusKm:69911,yearDays:4333,dayHours:9.9,moons:"80+",summary:"Banded giant with jet streams and storms."},
+  Saturn:{radiusKm:58232,yearDays:10759,dayHours:10.7,moons:"80+",summary:"Pale gas giant with dramatic rings."},
+  Uranus:{radiusKm:25362,yearDays:30687,dayHours:17.2,moons:27,summary:"Sideways ice giant; smooth cyan bands."},
+  Neptune:{radiusKm:24622,yearDays:60190,dayHours:16.1,moons:14,summary:"Deep blue ice giant with fierce winds."},
+  Moon:{radiusKm:1737,yearDays:27.3,dayHours:655.7,moons:0,summary:"Tidally locked — same face toward Earth.",parent:"Earth"}
+};
 
+// Orbit rings
+function addOrbitRing(dist){
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(dist-0.03, dist+0.03, 256),
+    new THREE.MeshBasicMaterial({ color: 0x7BDFFF, side: THREE.DoubleSide, opacity: 0.18, transparent: true })
+  ); ring.rotation.x=-Math.PI/2; scene.add(ring);
+}
+
+// Saturn rings texture
+function makeHighResRingsTexture(size=2048){
+  const c=document.createElement('canvas'); c.width=size; c.height=size; const ctx=c.getContext('2d');
+  const cx=size/2, cy=size/2, R=size/2; const inner=0.45*R, outer=0.95*R; const img=ctx.createImageData(size,size);
+  for(let y=0;y<size;y++) for(let x=0;x<size;x++){
+    const dx=x-cx, dy=y-cy; const rr=Math.hypot(dx,dy); const i=(y*size+x)*4;
+    if(rr<inner||rr>outer){ img.data[i+3]=0; continue; }
+    const t=(rr-inner)/(outer-inner), fine=Math.sin(t*1200)*.5+.5, med=Math.sin(t*60+t*10)*.5+.5;
+    const base=.62+.34*med, shade=base*(.84+.16*fine), edge=Math.min(1,Math.max(0,Math.min(t*6,(1-t)*6)));
+    img.data[i]=Math.round(235*shade*edge); img.data[i+1]=Math.round(225*shade*edge); img.data[i+2]=Math.round(205*shade*edge); img.data[i+3]=Math.round(245*edge);
+  }
+  ctx.putImageData(img,0,0); const tex=new THREE.CanvasTexture(c); tex.anisotropy=maxAniso(); return tex;
+}
+
+const planets=[], clickables=[], ringsToFollow=[], planetMeshesByName={}; let earthMesh=null;
+function phong(){ return new THREE.MeshPhongMaterial({ color:0xffffff, specular:0x222222, shininess:10 }); }
+
+const SPIN_SCALE = 0.5 / (24*3600); // visual scale for axial spin
+
+function addPlanet(def){
+  addOrbitRing(def.dist);
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(def.radius,64,48), phong());
+  mesh.rotation.z = THREE.MathUtils.degToRad(def.tiltDeg);
+  mesh.userData = {
+    type:'planet', name:def.name, dist:def.dist,
+    theta:Math.random()*Math.PI*2, orbitSpeed:def.orbitSpeed, radius:def.radius,
+    spinRadPerSec:(2*Math.PI/(Math.abs(def.spinHours||24)*3600))*(def.spinHours<0?-1:1)*SPIN_SCALE
+  };
+  mesh.position.set(def.dist*Math.cos(mesh.userData.theta),0,def.dist*Math.sin(mesh.userData.theta));
+  scene.add(mesh); planets.push(mesh); clickables.push(mesh); planetMeshesByName[def.name]=mesh; if(def.name==='Earth') earthMesh=mesh;
+
+  loadFromList(textureCandidatesFor(def.key), (t)=>{ mesh.material.map=t; mesh.material.bumpMap=t; mesh.material.bumpScale=0.02; mesh.material.needsUpdate=true; },
+    ()=>{ mesh.material.map=colorTexture(def.color); mesh.material.needsUpdate=true; });
+
+  if(def.name==='Saturn'){
+    const inner=def.radius*2.10, outer=def.radius*3.85;
+    const ringGeo=new THREE.RingGeometry(inner,outer,1024,1);
+    const ringMat=new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide});
+    const ring=new THREE.Mesh(ringGeo,ringMat); ring.rotation.x=-Math.PI/2; ring.position.copy(mesh.position);
+    scene.add(ring); ringsToFollow.push({ring,parent:mesh});
+    ringMat.map=makeHighResRingsTexture(2048); ringMat.opacity=1.0; ringMat.needsUpdate=true;
+  }
+}
+planetDefs.forEach(addPlanet);
+
+// Moon
+const moon = new THREE.Mesh(new THREE.SphereGeometry(0.27,64,48), phong());
+moon.userData={type:'moon',name:'Moon',parent:null,distFromParent:2.5,theta:Math.random()*Math.PI*2,orbitSpeed:0.08,radius:0.27,tiltDeg:6.7,spinRadPerSec:(2*Math.PI/(655.7*3600))*SPIN_SCALE};
+moon.rotation.z = THREE.MathUtils.degToRad(moon.userData.tiltDeg);
+scene.add(moon); clickables.push(moon);
+loadFromList(textureCandidatesFor('moon'), t=>{ moon.material.map=t; moon.material.bumpMap=t; moon.material.bumpScale=0.03; moon.material.needsUpdate=true; }, ()=>{ moon.material.map=colorTexture(0xaaaaaa); moon.material.needsUpdate=true; });
+
+// Safety buffer
+function getEffectiveRadius(obj){ return (obj?.userData?.radius)||1; }
+function enforceSafetyBufferFor(body){ const r=getEffectiveRadius(body); controls.minDistance=Math.max(r*1.15,2); }
+function clampCameraToSafety(){
+  let nearest=null, best=Infinity; const tgt=controls.target; const bodies=[...planets,moon];
+  for(const b of bodies){ const d=b.position.distanceTo(tgt); if(d<best){best=d; nearest=b;} }
+  if(!nearest){ controls.minDistance=BASE_MIN_DISTANCE; return; }
+  const r=getEffectiveRadius(nearest); const safe=Math.max(r*1.15,2);
+  controls.minDistance=Math.max(safe,BASE_MIN_DISTANCE);
+  const camDir=new THREE.Vector3().subVectors(camera.position,tgt); const dist=camDir.length();
+  if(dist<controls.minDistance){ camDir.normalize(); camera.position.copy(tgt.clone().add(camDir.multiplyScalar(controls.minDistance))); }
+}
+controls.addEventListener && controls.addEventListener('change', clampCameraToSafety);
+
+// Quick chooser
+const chooser=document.getElementById('chooser');
+['Mercury','Venus','Earth','Moon','Mars','Jupiter','Saturn','Uranus','Neptune'].forEach(n=>{
+  const b=document.createElement('button'); b.className='btn'; b.textContent=n;
+  b.onclick=()=>{ const m=(n==='Moon')?moon:planetMeshesByName[n]; if(m) onSelectBody(m); };
+  chooser.appendChild(b);
+});
+
+// Select/follow
+let following=false, followedBody=null, prevTarget=new THREE.Vector3(), isFocusing=false;
+function startFocusAndFollow(body){
+  followedBody=body; following=false; isFocusing=true; enforceSafetyBufferFor(body);
+  const r=body.userData.radius||1; const desired=body.position.clone().add(new THREE.Vector3(0,r*3,r*5));
+  const start=camera.position.clone(), st=controls.target.clone(), end=body.position.clone(); let t=0;
+  (function anim(){ t+=0.02; const e=t>=1?1:1-Math.pow(1-t,3);
+    camera.position.lerpVectors(start,desired,e); controls.target.lerpVectors(st,end,e);
+    if(e<1) requestAnimationFrame(anim); else { prevTarget.copy(body.position); following=true; isFocusing=false; stopFollowBtn.classList.remove('hidden'); } })();
+}
+function updateFollowCamera(){ if(!following||!followedBody||isFocusing) return; const nt=followedBody.position, delta=new THREE.Vector3().subVectors(nt,prevTarget); camera.position.add(delta); controls.target.copy(nt); prevTarget.copy(nt); }
+function onSelectBody(body){
+  const name=body.userData?.name||'Object'; planetNameEl.textContent=name;
+  const d=INFO[name]; if(d) setStats(`${d.summary} • Radius: ${fmt(d.radiusKm)} km • Year: ${fmt(d.yearDays)} days • Day: ${fmt(d.dayHours)} h • Moons: ${fmt(d.moons)}`);
+  inspectBtn.classList.remove('hidden'); startFocusAndFollow(body);
+}
+stopFollowBtn.onclick=()=>{ following=false; followedBody=null; stopFollowBtn.classList.add('hidden'); };
+
+// Raycast select
+const raycaster=new THREE.Raycaster(), mouse=new THREE.Vector2();
+canvas.addEventListener('click',(e)=>{ const rect=canvas.getBoundingClientRect(); const x=(e.clientX-rect.left)/rect.width, y=(e.clientY-rect.top)/rect.height;
+  mouse.x=x*2-1; mouse.y=-(y*2-1); raycaster.setFromCamera(mouse,camera); const hits=raycaster.intersectObjects(clickables,true); if(!hits.length) return; onSelectBody(hits[0].object); });
+// Reset
+canvas.addEventListener('dblclick',()=>{ following=false; followedBody=null; stopFollowBtn.classList.add('hidden'); camera.position.set(0,30,110); controls.target.set(0,0,0); controls.minDistance=BASE_MIN_DISTANCE; planetNameEl.textContent='Click a planet or Moon'; setStats(''); inspectBtn.classList.add('hidden'); });
+
+// Animation
+const clock=new THREE.Clock();
+function updateOrbits(dt){
+  planets.forEach(p=>{ const d=p.userData; d.theta += d.orbitSpeed*dt*60; const R=d.dist; p.position.set(R*Math.cos(d.theta),0,R*Math.sin(d.theta)); p.rotation.y += (d.spinRadPerSec||0)*dt; });
+  ringsToFollow.forEach(({ring,parent})=> ring.position.copy(parent.position));
+  if(earthMesh){ if(!moon.userData.parent) moon.userData.parent=earthMesh; moon.userData.theta += moon.userData.orbitSpeed*dt*60; const r=moon.userData.distFromParent;
+    moon.position.set(earthMesh.position.x+r*Math.cos(moon.userData.theta),0,earthMesh.position.z+r*Math.sin(moon.userData.theta));
+    moon.rotation.y += (moon.userData.spinRadPerSec||0)*dt; moon.lookAt(earthMesh.position);
+  }
+}
+function animate(){ requestAnimationFrame(animate); const dt=clock.getDelta(); resizeRendererToDisplaySize(); updateOrbits(dt); updateFollowCamera(); clampCameraToSafety(); controls.update(); renderer.render(scene,camera); }
+animate();
+
+// Body select dropdown
+const bodySelect=document.getElementById('bodySelect');
+bodySelect.addEventListener('change',()=>{ const name=bodySelect.value; const mesh=planetMeshesByName[name]; if(mesh) onSelectBody(mesh); });
+
+// Inspect modal
+const inspectOverlay=document.createElement('div'); inspectOverlay.id='inspectOverlay'; inspectOverlay.innerHTML=`
+  <div id="inspectPanel">
+    <div id="inspectHeader">
+      <div class="title" id="inspectTitle">Inspect</div>
+      <div class="flex items-center gap-2">
+        <label class="text-xs flex items-center gap-2"><input id="spinToggle" type="checkbox"/> Spin</label>
+        <button id="resetInspectCam" class="btn" aria-label="Reset view">Reset view</button>
+        <button id="closeInspect" class="btn" aria-label="Close">Close</button>
+      </div>
+    </div>
+    <div id="inspectBody"><div id="inspectCanvas"></div></div>
+  </div>`;
+document.body.appendChild(inspectOverlay);
+let inspRenderer,inspScene,inspCam,inspControls,inspMesh,inspRings=null,inspRAF=0,inspRadius=1;
+const inspectTitle=inspectOverlay.querySelector('#inspectTitle'), spinToggle=inspectOverlay.querySelector('#spinToggle'), resetInspectCam=inspectOverlay.querySelector('#resetInspectCam'), closeInspect=inspectOverlay.querySelector('#closeInspect'), inspectCanvas=document.createElement('div');
+inspectCanvas.id='inspectCanvas'; document.getElementById('inspectBody').appendChild(inspectCanvas);
+
+function openInspect(name){
+  inspectTitle.textContent=`Inspect: ${name}`; inspectOverlay.style.display='flex';
+  if(!inspRenderer){
+    inspRenderer=new THREE.WebGLRenderer({antialias:true}); inspRenderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+    if('outputColorSpace'in inspRenderer) inspRenderer.outputColorSpace=THREE.SRGBColorSpace; else inspRenderer.outputEncoding=THREE.sRGBEncoding;
+    inspRenderer.toneMapping=THREE.ACESFilmicToneMapping; inspRenderer.setSize(inspectCanvas.clientWidth,inspectCanvas.clientHeight); inspectCanvas.appendChild(inspRenderer.domElement);
+    inspScene=new THREE.Scene(); inspScene.background=new THREE.Color(0x000000);
+    inspCam=new THREE.PerspectiveCamera(60,inspectCanvas.clientWidth/inspectCanvas.clientHeight,0.01,2000); inspCam.position.set(0,0.8,2.2);
+    inspControls=new THREE.OrbitControls(inspCam,inspRenderer.domElement); inspControls.enableDamping=true; inspControls.dampingFactor=0.06; inspControls.enablePan=false;
+    inspScene.add(new THREE.AmbientLight(0xffffff,0.5)); const L=new THREE.DirectionalLight(0xffffff,1.0); L.position.set(5,2,8); inspScene.add(L);
+    new ResizeObserver(()=>{ const w=inspectCanvas.clientWidth,h=inspectCanvas.clientHeight; inspRenderer.setSize(w,h); inspCam.aspect=w/h; inspCam.updateProjectionMatrix(); }).observe(inspectCanvas);
+  }
+  if(inspMesh){ inspScene.remove(inspMesh); inspMesh.geometry.dispose(); inspMesh.material.map?.dispose(); inspMesh.material.dispose(); inspMesh=null; }
+  if(inspRings){ inspScene.remove(inspRings); inspRings.geometry.dispose(); inspRings.material.map?.dispose(); inspRings.material.dispose(); inspRings=null; }
+  const rLookup={Mercury:.38,Venus:.95,Earth:1,Moon:.27,Mars:.53,Jupiter:1.5,Saturn:1.2,Uranus:1,Neptune:1}; inspRadius=rLookup[name]||1;
+  inspMesh=new THREE.Mesh(new THREE.SphereGeometry(1,128,96),new THREE.MeshPhongMaterial({color:0xffffff,specular:0x222222,shininess:10}));
+  const tilt={Mercury:.03,Venus:177.4,Earth:23.4,Mars:25.2,Jupiter:3.1,Saturn:26.7,Uranus:97.8,Neptune:28.3,Moon:6.7}[name]||0;
+  inspMesh.rotation.z=THREE.MathUtils.degToRad(tilt); inspMesh.scale.setScalar(inspRadius); inspScene.add(inspMesh);
+  const key=(name==='Moon')?'moon':name.toLowerCase(); const cands=textureCandidatesFor(key);
+  loadFromList(cands,(t)=>{ t.anisotropy=maxAniso(); if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding; inspMesh.material.map=t; inspMesh.material.bumpMap=t; inspMesh.material.bumpScale=0.02; inspMesh.material.needsUpdate=true; },()=>{});
+  if(name==='Saturn'){ const inner=inspRadius*2.10, outer=inspRadius*3.85; const geo=new THREE.RingGeometry(inner,outer,2048,1); const mat=new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide}); const ring=new THREE.Mesh(geo,mat); ring.rotation.x=-Math.PI/2; mat.map=makeHighResRingsTexture(4096); mat.opacity=1.0; mat.needsUpdate=true; inspRings=ring; inspScene.add(ring); }
+  inspControls.minDistance=Math.max(inspRadius*1.1,0.25); inspControls.maxDistance=Math.max(inspRadius*15,8); inspControls.target.set(0,0,0); inspCam.position.set(0,inspRadius*0.8,inspRadius*2.2);
+  spinToggle.checked=false;
+  const tick=()=>{ inspRAF=requestAnimationFrame(tick); if(spinToggle.checked){ inspMesh.rotation.y+=0.01; } inspControls.update(); inspRenderer.render(inspScene,inspCam); };
+  cancelAnimationFrame(inspRAF); tick();
+}
+document.getElementById('inspectBtn').addEventListener('click',()=>{ if(followedBody) openInspect(followedBody.userData?.name||'Object'); });
+document.getElementById('inspectOverlay').addEventListener('click',(e)=>{ if(e.target.id==='inspectOverlay') document.getElementById('closeInspect').click(); });
+document.getElementById('closeInspect').addEventListener('click',()=>{ document.getElementById('inspectOverlay').style.display='none'; cancelAnimationFrame(inspRAF); });
+document.getElementById('resetInspectCam').addEventListener('click',()=>{ if(!inspControls) return; inspControls.target.set(0,0,0); inspCam.position.set(0,inspRadius*0.8,inspRadius*2.2); });
+
+// Tabs + Deep Zoom
+const viewPlanets=document.getElementById('view-planets');
+const viewZoom=document.getElementById('view-zoom');
+const tabPlanets=document.getElementById('tabPlanets');
+const tabZoom=document.getElementById('tabZoom');
+function showPlanetsTab(){ viewPlanets.classList.remove('hidden'); viewZoom.classList.add('hidden'); tabPlanets.classList.add('btn-primary'); tabZoom.classList.remove('btn-primary'); }
+function showZoomTab(){ viewZoom.classList.remove('hidden'); viewPlanets.classList.add('hidden'); tabZoom.classList.add('btn-primary'); tabPlanets.classList.remove('btn-primary'); ensureViewer(); loadLayer(lastLayer); }
+tabPlanets.addEventListener('click', showPlanetsTab);
+tabZoom.addEventListener('click', showZoomTab);
+
+let viewer=null; let lastLayer='earth';
+function ensureViewer(){ if(viewer) return viewer; viewer=OpenSeadragon({ id:'viewer', prefixUrl:'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.1/images/', showNavigator:true, maxZoomPixelRatio:4, showRotationControl:false, gestureSettingsMouse:{ clickToZoom:true, dblClickToZoom:true } }); return viewer; }
+const DZ_SOURCES={
+  earth:{type:'image',url:'https://upload.wikimedia.org/wikipedia/commons/8/86/Blue_Marble_2002.png'},
+  mars:{type:'image',url:'https://upload.wikimedia.org/wikipedia/commons/0/02/Mars_Viking_MDIM21_1km_plus_poles.jpg'},
+  moon:{type:'image',url:'https://upload.wikimedia.org/wikipedia/commons/5/5e/Moon_map_LRO_WAC_Poles_1k.jpg'}
+};
+function loadLayer(key){ lastLayer=key; ensureViewer().open(DZ_SOURCES[key]); }
+
+// ---------- OPTIONAL: Tiny Texture Check Panel (remove later) ----------
+(function(){
+  const base = location.origin + location.pathname.replace(/\/[^\/]*$/, '/');
+  const needed = ["mercury","venus","earth","moon","mars","jupiter","saturn","uranus","neptune"];
+  const box = document.createElement('div');
+  box.style.cssText='position:fixed;bottom:10px;right:10px;background:rgba(0,0,0,.7);color:#fff;padding:10px;border:1px solid #4b5563;border-radius:10px;font:12px system-ui;z-index:99999;';
+  box.innerHTML = '<b>Texture Check</b><div id="tc"></div>'; document.body.appendChild(box);
+  const list = box.querySelector('#tc');
+  (async () => {
+    for (const n of needed) {
+      const url = base + 'images/' + n + '.jpg';
+      try {
+        const r = await fetch(url, { cache:'no-store' });
+        const ok = r.ok && (r.headers.get('content-type')||'').startsWith('image/');
+        const line = document.createElement('div');
+        line.innerHTML = (ok ? '✅' : '❌') + ' ' + n + ' → ' + '<a href="'+url+'" target="_blank" style="color:#93c5fd;text-decoration:underline;">images/'+n+'.jpg</a>';
+        list.appendChild(line);
+      } catch(e){
+        const line = document.createElement('div');
+        line.innerHTML = '❌ ' + n + ' → images/'+n+'.jpg (fetch error)';
+        list.appendChild(line);
+      }
+    }
+  })();
+})();
+</script>
+
+<!-- Start at Home; auto-focus default planet on load -->
+<script>
+showSection('home');
+window.addEventListener('load', ()=>{ const mesh = (window.planetMeshesByName||{})[document.getElementById('bodySelect').value]; if(mesh) onSelectBody(mesh); });
 </script>
 </body>
 </html>
+
