@@ -296,44 +296,16 @@ function colorTexture(hex=0x777777){
 /* LOCAL (same-origin) first, then jsDelivr mirrors (CORS-OK). 
    Put the local files in /images as listed below. */
 const TEXSRC = {
-  mercury: [
-    "images/mercury.jpg",
-    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/mercury.png"
-  ],
-  venus: [
-    "images/venus.jpg",
-    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/venus.jpg"
-  ],
-  earth: [
-    "images/earth.jpg",
-    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/earth_atmos_2048.jpg"
-  ],
-  moon: [
-    "images/moon.jpg",
-    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/moon_1024.jpg"
-  ],
-  mars: [
-    "images/mars.jpg",
-    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/mars_1k_color.jpg"
-  ],
-  jupiter: [
-    "images/jupiter.jpg",
-    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/jupiter2_1024.jpg"
-  ],
-  saturn: [
-    "images/saturn.jpg",
-    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/saturn.jpg"
-  ],
-  uranus: [
-    "images/uranus.jpg",
-    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/uranus.jpg"
-  ],
-  neptune: [
-    "images/neptune.jpg",
-    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/neptune.jpg"
-  ]
+  mercury: ["textures/mercury.jpg"],
+  venus:   ["textures/venus.jpg"],
+  earth:   ["textures/earth.jpg"],
+  moon:    ["textures/moon.jpg"],
+  mars:    ["textures/mars.jpg"],
+  jupiter: ["textures/jupiter.jpg"],
+  saturn:  ["textures/saturn.jpg"],
+  uranus:  ["textures/uranus.jpg"],
+  neptune: ["textures/neptune.jpg"]
 };
-
 function textureCandidatesFor(key){ return TEXSRC[key] || []; }
 function colorTexture(hex=0x777777){
   const c=document.createElement('canvas'); c.width=c.height=2; const x=c.getContext('2d');
