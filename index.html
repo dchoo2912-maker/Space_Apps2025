@@ -16,300 +16,96 @@
 <p class="p1"><span class="s1">&lt;!DOCTYPE html&gt;</span></p>
 <p class="p1"><span class="s1">&lt;html lang="en"&gt;</span></p>
 <p class="p1"><span class="s1">&lt;head&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8" /&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;title&gt;Mission Vista — Solar System (Debug)&lt;/title&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- Tailwind (UI only) --&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- Fonts --&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- Three.js + OrbitControls --&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"&gt;&lt;/script&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"&gt;&lt;/script&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;style&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>html,body { height:100%; margin:0; background:#000; font-family:'Inter',sans-serif; }</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>canvas { display:block; }</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#hud {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>position: absolute; top: 12px; right: 12px;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>background: rgba(0,0,0,.6); color:#fff; font-size:12px;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>padding:8px 10px; border-radius:10px; border:1px solid #334155;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>z-index: 10;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#planetName {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>position: absolute; top: 12px; left: 12px;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>background: rgba(0,0,0,.6); color:#fff; font-size:16px;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>padding:10px 14px; border-radius:12px; border:1px solid #334155;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>z-index: 10;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#inspectOverlay {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>position:fixed; inset:0; background:rgba(0,0,0,0.85);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>display:none; align-items:center; justify-content:center; z-index:9999;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#inspectPanel {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>width:min(92vw, 1000px); height:min(86vh, 700px);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>background:#0b1020; border:1px solid rgba(255,255,255,.12);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>border-radius:12px; display:flex; flex-direction:column; overflow:hidden;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#inspectHeader {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>background:#111936; color:#eaf2ff; padding:10px 14px; font-weight:700;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #223058;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>#inspectCanvas { flex:1; }</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>.btn {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>padding:.45rem .65rem; border-radius:.65rem; font-size:.85rem;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>background: #2563eb; color:#fff;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</span></p>
+<p class="p1"><span class="s1">&lt;meta charset="UTF-8" /&gt;</span></p>
+<p class="p1"><span class="s1">&lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;</span></p>
+<p class="p1"><span class="s1">&lt;title&gt;Mission Vista – Solar System&lt;/title&gt;</span></p>
+<p class="p1"><span class="s1">&lt;style&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#fff;font-family:sans-serif}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>#planetName{position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.6);padding:8px 12px;border-radius:8px}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>canvas{display:block}</span></p>
+<p class="p1"><span class="s1">&lt;/style&gt;</span></p>
+<p class="p1"><span class="s1">&lt;script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"&gt;&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1">&lt;script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"&gt;&lt;/script&gt;</span></p>
 <p class="p1"><span class="s1">&lt;/head&gt;</span></p>
 <p class="p1"><span class="s1">&lt;body&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div id="planetName"&gt;Click a planet&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div id="hud"&gt;tick: &lt;span id="tick"&gt;0&lt;/span&gt; • objects: &lt;span id="objs"&gt;0&lt;/span&gt;&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;button id="inspectBtn" class="btn" style="position:absolute; top:60px; left:12px; display:none; z-index:10;"&gt;Inspect&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1">&lt;div id="planetName"&gt;Click a planet&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1">&lt;script&gt;</span></p>
+<p class="p1"><span class="s1">const scene = new THREE.Scene();</span></p>
+<p class="p1"><span class="s1">const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 2000);</span></p>
+<p class="p1"><span class="s1">camera.position.set(0,20,60);</span></p>
 <p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- Inspect modal --&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div id="inspectOverlay"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div id="inspectPanel"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div id="inspectHeader"&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;span id="inspectTitle"&gt;Inspect&lt;/span&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;button id="closeInspect" class="btn" style="background:#dc2626"&gt;Close&lt;/button&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div id="inspectCanvas"&gt;&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1">const renderer = new THREE.WebGLRenderer({antialias:true});</span></p>
+<p class="p1"><span class="s1">renderer.setSize(innerWidth, innerHeight);</span></p>
+<p class="p1"><span class="s1">if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;</span></p>
+<p class="p1"><span class="s1">document.body.appendChild(renderer.domElement);</span></p>
 <p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Scene setup ---</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const scene = new THREE.Scene();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 5000);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>camera.position.set(0, 20, 80);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const renderer = new THREE.WebGLRenderer({ antialias:true });</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>renderer.setSize(window.innerWidth, window.innerHeight);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>renderer.setClearColor(0x000000, 1);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>document.body.appendChild(renderer.domElement);</span></p>
+<p class="p1"><span class="s1">const controls = new THREE.OrbitControls(camera, renderer.domElement);</span></p>
+<p class="p1"><span class="s1">controls.enableDamping = true;</span></p>
 <p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const controls = new THREE.OrbitControls(camera, renderer.domElement);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>controls.enableDamping = true;</span></p>
+<p class="p1"><span class="s1">scene.add(new THREE.AmbientLight(0xffffff,0.3));</span></p>
+<p class="p1"><span class="s1">const sunLight = new THREE.PointLight(0xffffff,1.2);</span></p>
+<p class="p1"><span class="s1">scene.add(sunLight);</span></p>
 <p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Lights + a bright SUN mesh so we always see *something* ---</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const hemi = new THREE.HemisphereLight(0xbfdfff, 0x080820, 0.4);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>scene.add(hemi);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const sunLight = new THREE.PointLight(0xffffff, 2.0, 0);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>sunLight.position.set(0, 0, 0);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>scene.add(sunLight);</span></p>
+<p class="p1"><span class="s1">const sun = new THREE.Mesh(new THREE.SphereGeometry(4,64,64), new THREE.MeshBasicMaterial({color:0xffee88}));</span></p>
+<p class="p1"><span class="s1">scene.add(sun);</span></p>
 <p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const sunGeo = new THREE.SphereGeometry(3, 64, 64);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const sunMat = new THREE.MeshBasicMaterial({ color: 0xfff5cc });</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const sun = new THREE.Mesh(sunGeo, sunMat);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>scene.add(sun); // if you see this glowing ball, rendering is fine</span></p>
+<p class="p1"><span class="s1">// Planets (no axis spin, only orbits)</span></p>
+<p class="p1"><span class="s1">const loader = new THREE.TextureLoader();</span></p>
+<p class="p1"><span class="s1">function makePlanet(name, size, dist, orbitSpeed, texFile, color){</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>const tex = loader.load("textures/"+texFile);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>const mat = new THREE.MeshPhongMaterial({map:tex,color:color||0xffffff});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>const mesh = new THREE.Mesh(new THREE.SphereGeometry(size,64,64), mat);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>mesh.userData={dist:dist, angle:Math.random()*Math.PI*2, speed:orbitSpeed, name:name};</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>scene.add(mesh);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>return mesh;</span></p>
+<p class="p1"><span class="s1">}</span></p>
 <p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- A small starfield (faint) so background isn't pitch black ---</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>(function makeStars() {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const stars = 2000;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const pts = new Float32Array(stars * 3);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>for (let i = 0; i &lt; stars; i++) {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const r = 800 + Math.random()*400;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const theta = Math.random()*Math.PI*2, phi = Math.acos(2*Math.random()-1);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const x = r * Math.sin(phi) * Math.cos(theta);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const y = r * Math.sin(phi) * Math.sin(theta);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const z = r * Math.cos(phi);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>pts[i*3+0] = x; pts[i*3+1] = y; pts[i*3+2] = z;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const g = new THREE.BufferGeometry();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>g.setAttribute('position', new THREE.BufferAttribute(pts, 3));</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const m = new THREE.PointsMaterial({ color: 0x89d4ff, size: 1, sizeAttenuation: true, transparent: true, opacity: 0.7 });</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const p = new THREE.Points(g, m);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>scene.add(p);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>})();</span></p>
+<p class="p1"><span class="s1">const planets = [</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Mercury",1,8,0.02,"mercury.jpg"),</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Venus",1.2,12,0.015,"venus.jpg"),</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Earth",1.3,16,0.012,"earth.jpg"),</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Moon",0.4,19,0.04,"moon.jpg",0xaaaaaa),</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Mars",1.1,22,0.01,"mars.jpg"),</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Jupiter",3,30,0.006,"jupiter.jpg"),</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Saturn",2.5,38,0.005,"saturn.jpg"),</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Uranus",2.2,46,0.004,"uranus.jpg"),</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Neptune",2.1,54,0.003,"neptune.jpg"),</span></p>
+<p class="p1"><span class="s1">];</span></p>
 <p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Texture helper (local-first; fallback to color) ---</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const loader = new THREE.TextureLoader();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function loadTex(url, onOK, onFail) {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>loader.load(url, (t) =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if ('colorSpace' in t) t.colorSpace = THREE.SRGBColorSpace;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>onOK(t);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}, undefined, (err) =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>console.warn('Texture failed:', url, err);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>onFail &amp;&amp; onFail();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>});</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function colorMaterial(hex) {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>return new THREE.MeshPhongMaterial({ color: hex, specular: 0x222222, shininess: 8 });</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1">const raycaster = new THREE.Raycaster();</span></p>
+<p class="p1"><span class="s1">const mouse = new THREE.Vector2();</span></p>
+<p class="p1"><span class="s1">let selected=null;</span></p>
 <p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Planets data (uses your local textures/) ---</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const planetsData = [</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Mercury', size:1.2, dist:8,<span class="Apple-converted-space">  </span>map:'textures/mercury.jpg', color:0x888888, orbit:0.020, spin:0.010 },</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Venus', <span class="Apple-converted-space">  </span>size:1.4, dist:12, map:'textures/venus.jpg', <span class="Apple-converted-space">  </span>color:0xe5bd9a, orbit:0.015, spin:-0.004 },</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Earth', <span class="Apple-converted-space">  </span>size:1.5, dist:16, map:'textures/earth.jpg', <span class="Apple-converted-space">  </span>color:0x2e74c8, orbit:0.012, spin:0.015 },</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Moon',<span class="Apple-converted-space">    </span>size:0.5, dist:18, map:'textures/moon.jpg',<span class="Apple-converted-space">    </span>color:0xaaaaaa, orbit:0.018, spin:0.012 },</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Mars',<span class="Apple-converted-space">    </span>size:1.3, dist:22, map:'textures/mars.jpg',<span class="Apple-converted-space">    </span>color:0xb44b32, orbit:0.010, spin:0.012 },</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Jupiter', size:3.0, dist:32, map:'textures/jupiter.jpg', color:0xd2b48c, orbit:0.006, spin:0.030 },</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Saturn',<span class="Apple-converted-space">  </span>size:2.6, dist:40, map:'textures/saturn.jpg',<span class="Apple-converted-space">  </span>color:0xead6a4, orbit:0.005, spin:0.026 },</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Uranus',<span class="Apple-converted-space">  </span>size:2.2, dist:48, map:'textures/uranus.jpg',<span class="Apple-converted-space">  </span>color:0x7fcfd6, orbit:0.004, spin:-0.022 },</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>{ name:'Neptune', size:2.0, dist:56, map:'textures/neptune.jpg', color:0x3455d1, orbit:0.003, spin:0.020 },</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>];</span></p>
+<p class="p1"><span class="s1">window.addEventListener('click', ev=&gt;{</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>mouse.x = (ev.clientX/innerWidth)*2 - 1;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>mouse.y = -(ev.clientY/innerHeight)*2 + 1;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>raycaster.setFromCamera(mouse, camera);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>const hit = raycaster.intersectObjects(planets);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>if(hit.length){</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>selected = hit[0].object;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>document.getElementById('planetName').textContent = "Selected: "+selected.userData.name;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p1"><span class="s1">});</span></p>
 <p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const planets = [];</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const planetMeshes = {};</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const planetNameEl = document.getElementById('planetName');</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const inspectBtn = document.getElementById('inspectBtn');</span></p>
+<p class="p1"><span class="s1">function animate(){</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>requestAnimationFrame(animate);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>planets.forEach(p=&gt;{</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>p.userData.angle += p.userData.speed;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>p.position.set(Math.cos(p.userData.angle)*p.userData.dist,0,Math.sin(p.userData.angle)*p.userData.dist);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>controls.update();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>renderer.render(scene, camera);</span></p>
+<p class="p1"><span class="s1">}</span></p>
+<p class="p1"><span class="s1">animate();</span></p>
 <p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function makePlanet(p) {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const geo = new THREE.SphereGeometry(p.size, 64, 64);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const mat = colorMaterial(p.color); // temp while texture loads</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const mesh = new THREE.Mesh(geo, mat);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>mesh.userData = { ...p, angle: Math.random()*Math.PI*2 };</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>// start somewhere on the orbit</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>mesh.position.set(p.dist, 0, 0);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>scene.add(mesh);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>planets.push(mesh);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>planetMeshes[p.name] = mesh;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>// load texture</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>loadTex(p.map, (t) =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>mat.map = t;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>mat.needsUpdate = true;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>console.log('Loaded:', p.name, p.map);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}, () =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>console.log('Using color fallback for', p.name);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>});</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>planetsData.forEach(makePlanet);</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Raycaster for selection ---</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const raycaster = new THREE.Raycaster();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const mouse = new THREE.Vector2();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let selectedPlanet = null;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>window.addEventListener('click', (event) =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>mouse.x = (event.clientX / window.innerWidth) * 2 - 1;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>raycaster.setFromCamera(mouse, camera);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const hits = raycaster.intersectObjects(planets, true);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>if (hits.length) {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>selectedPlanet = hits[0].object;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>planetNameEl.textContent = selectedPlanet.userData.name;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspectBtn.style.display = 'inline-block';</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>});</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Inspect modal setup ---</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const inspectOverlay = document.getElementById('inspectOverlay');</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const closeInspect = document.getElementById('closeInspect');</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const inspectTitle = document.getElementById('inspectTitle');</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const inspectCanvas = document.getElementById('inspectCanvas');</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let inspRenderer, inspScene, inspCam, inspControls, inspMesh, inspRAF=0;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>document.getElementById('inspectBtn').addEventListener('click', () =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>if (!selectedPlanet) return;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>inspectTitle.textContent = "Inspect: " + selectedPlanet.userData.name;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>inspectOverlay.style.display = 'flex';</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>if (!inspRenderer) {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspRenderer = new THREE.WebGLRenderer({ antialias: true });</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if ('outputColorSpace' in inspRenderer) inspRenderer.outputColorSpace = THREE.SRGBColorSpace;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspRenderer.setSize(10, 10); // placeholder; ResizeObserver adjusts below</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspectCanvas.innerHTML = '';</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspectCanvas.appendChild(inspRenderer.domElement);</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspScene = new THREE.Scene();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspScene.add(new THREE.AmbientLight(0xffffff, 1));</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const dl = new THREE.DirectionalLight(0xffffff, 1.2);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>dl.position.set(4, 2, 6);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspScene.add(dl);</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspCam = new THREE.PerspectiveCamera(55, 1, 0.01, 2000);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspCam.position.set(0, 0, 3);</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspControls = new THREE.OrbitControls(inspCam, inspRenderer.domElement);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspControls.enableDamping = true;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>new ResizeObserver(() =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>const w = inspectCanvas.clientWidth, h = inspectCanvas.clientHeight;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>inspRenderer.setSize(w, h, false);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>inspCam.aspect = Math.max(1e-3, w / Math.max(1, h));</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>inspCam.updateProjectionMatrix();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}).observe(inspectCanvas);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>// replace mesh</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>if (inspMesh) {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspScene.remove(inspMesh);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspMesh.geometry.dispose();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspMesh.material.map?.dispose();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspMesh.material.dispose();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspMesh = null;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const geo = new THREE.SphereGeometry(1.2, 96, 72);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x222222, shininess: 10 });</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>inspMesh = new THREE.Mesh(geo, mat);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>inspScene.add(inspMesh);</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>// load same texture into inspector</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>loadTex(selectedPlanet.userData.map, (t) =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>mat.map = t; mat.needsUpdate = true;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>});</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>cancelAnimationFrame(inspRAF);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const loop = () =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspRAF = requestAnimationFrame(loop);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspMesh.rotation.y += 0.01;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspControls.update();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>inspRenderer.render(inspScene, inspCam);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>};</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>loop();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>});</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>document.getElementById('closeInspect').addEventListener('click', () =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>inspectOverlay.style.display = 'none';</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>cancelAnimationFrame(inspRAF);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>});</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Animation + Debug HUD ---</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const tickEl = document.getElementById('tick');</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const objsEl = document.getElementById('objs');</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let tick = 0;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function animate() {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>requestAnimationFrame(animate);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>tick++;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>// orbits + spin</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>planets.forEach((p) =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const d = p.userData.dist;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>p.userData.angle += p.userData.orbit;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>p.position.x = Math.cos(p.userData.angle) * d;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>p.position.z = Math.sin(p.userData.angle) * d;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>p.rotation.y += p.userData.spin;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>});</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>controls.update();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>renderer.render(scene, camera);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>if ((tick &amp; 15) === 0) { // update HUD every ~16 frames</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>tickEl.textContent = String(tick);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>objsEl.textContent = String(scene.children.length);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>animate();</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// --- Resize ---</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>window.addEventListener('resize', () =&gt; {</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>const w = window.innerWidth, h = window.innerHeight;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>camera.aspect = w / Math.max(1, h);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>camera.updateProjectionMatrix();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>renderer.setSize(w, h, false);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>});</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// Aim camera</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>camera.lookAt(0,0,0);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1">addEventListener('resize',()=&gt;{</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>camera.aspect = innerWidth/innerHeight;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>camera.updateProjectionMatrix();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>renderer.setSize(innerWidth, innerHeight);</span></p>
+<p class="p1"><span class="s1">});</span></p>
+<p class="p1"><span class="s1">&lt;/script&gt;</span></p>
 <p class="p1"><span class="s1">&lt;/body&gt;</span></p>
 <p class="p1"><span class="s1">&lt;/html&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
 </body>
 </html>
