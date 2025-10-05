@@ -246,15 +246,15 @@ function colorTexture(hex=0x777777){ const c=document.createElement('canvas'); c
 
 /* Local same-origin first; if missing, use Wikimedia */
 const TEXSRC = {
-  mercury: ["images/mercury.jpg","https://upload.wikimedia.org/wikipedia/commons/2/2c/Mercury_global_map_MESSENGER_mosaic_enhanced_color.jpg"],
-  venus:   ["images/venus.jpg","https://upload.wikimedia.org/wikipedia/commons/8/85/Venus_RGB_Map_1800x900.jpg"],
-  earth:   ["images/earth.jpg","https://upload.wikimedia.org/wikipedia/commons/5/5f/Blue_Marble_2002.png"],
-  moon:    ["images/moon.jpg","https://upload.wikimedia.org/wikipedia/commons/5/5e/Moon_map_LRO_WAC_Poles_1k.jpg"],
-  mars:    ["images/mars.jpg","https://upload.wikimedia.org/wikipedia/commons/0/02/Mars_Viking_MDIM21_1km_plus_poles.jpg"],
-  jupiter: ["images/jupiter.jpg","https://upload.wikimedia.org/wikipedia/commons/5/5a/Jupiter_map_by_Askaniy.jpg"],
-  saturn:  ["images/saturn.jpg","https://upload.wikimedia.org/wikipedia/commons/f/f0/Saturn_map_by_Askaniy.png"],
-  uranus:  ["images/uranus.jpg","https://upload.wikimedia.org/wikipedia/commons/3/3d/Solarsystemscope_texture_2k_uranus.jpg"],
-  neptune: ["images/neptune.jpg","https://upload.wikimedia.org/wikipedia/commons/5/56/Solarsystemscope_texture_2k_neptune.jpg"]
+  mercury: ["images/mercury.jpg"],
+  venus:   ["images/venus.jpg"],
+  earth:   ["images/earth.jpg"],
+  moon:    ["images/moon.jpg"],
+  mars:    ["images/mars.jpg"],
+  jupiter: ["images/jupiter.jpg"],
+  saturn:  ["images/saturn.jpg"],
+  uranus:  ["images/uranus.jpg"],
+  neptune: ["images/neptune.jpg"]
 };
 function textureCandidatesFor(key){ return TEXSRC[key]||[]; }
 
