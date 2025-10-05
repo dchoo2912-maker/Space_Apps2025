@@ -131,6 +131,23 @@ header{backdrop-filter:blur(10px);background-color:rgba(10,10,30,0.4);position:s
   Built for the NASA Space Apps Challenge 🚀
 </footer>
 
+<!-- Minimal SPA nav fail-safe (keeps buttons working even if later JS throws) -->
+<script>
+(function(){
+  function showSectionHard(id){
+    const home=document.getElementById('home'), explorer=document.getElementById('explorer');
+    if(!home||!explorer) return;
+    home.classList.toggle('hidden', id!=='home');
+    explorer.classList.toggle('hidden', id!=='explorer');
+  }
+  document.querySelectorAll('[data-goto]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id=btn.getAttribute('data-goto'); showSectionHard(id);
+    });
+  });
+})();
+</script>
+
 <!-- OrbitControls-lite (inline) -->
 <script>
 class OrbitControlsLite {
@@ -185,7 +202,7 @@ THREE.OrbitControls = OrbitControlsLite;
 
 <!-- App -->
 <script>
-// ---------- SPA NAV ----------
+// ---------- SPA NAV (main) ----------
 function showSection(id){
   document.getElementById('home').classList.toggle('hidden', id!=='home');
   document.getElementById('explorer').classList.toggle('hidden', id!=='explorer');
@@ -228,10 +245,9 @@ const planetNameEl = document.getElementById('planetName'); const statsEl = docu
 const inspectBtn = document.getElementById('inspectBtn'); const stopFollowBtn = document.getElementById('stopFollowBtn');
 function setStats(t){ statsEl.textContent = t||''; } function fmt(n){ return typeof n==='number'? n.toLocaleString() : n; }
 
-// ---------- Textures (local-first with Wikimedia fallbacks) ----------
+// ---------- Textures: remote-only (always works on Pages) ----------
 const texLoader = new THREE.TextureLoader(); texLoader.crossOrigin = 'anonymous';
 function maxAniso(){ return renderer.capabilities.getMaxAnisotropy?.() || 8; }
-
 function loadFromList(urls, ok, fail){
   let i=0;
   const tryNext=()=>{ if(i>=urls.length){ console.warn("All texture URLs failed:", urls); fail&&fail(); return; }
@@ -242,14 +258,9 @@ function loadFromList(urls, ok, fail){
     }, undefined, (err)=>{ console.warn("❌ Failed:", u, err); tryNext(); });
   }; tryNext();
 }
-function colorTexture(hex=0x777777){
-  const c=document.createElement('canvas'); c.width=c.height=2;
-  const x=c.getContext('2d'); x.fillStyle='#'+hex.toString(16).padStart(6,'0'); x.fillRect(0,0,2,2);
-  const t=new THREE.CanvasTexture(c); t.anisotropy=maxAniso();
-  if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding; return t;
-}
+function colorTexture(hex=0x777777){ const c=document.createElement('canvas'); c.width=c.height=2; const x=c.getContext('2d'); x.fillStyle='#'+hex.toString(16).padStart(6,'0'); x.fillRect(0,0,2,2); const t=new THREE.CanvasTexture(c); t.anisotropy=maxAniso(); if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding; return t; }
 
-/* Force remote textures so it always works on GitHub Pages */
+/* Remote textures (CORS-safe) */
 const TEXSRC = {
   mercury: ["https://upload.wikimedia.org/wikipedia/commons/2/2c/Mercury_global_map_MESSENGER_mosaic_enhanced_color.jpg"],
   venus:   ["https://upload.wikimedia.org/wikipedia/commons/8/85/Venus_RGB_Map_1800x900.jpg"],
@@ -261,11 +272,9 @@ const TEXSRC = {
   uranus:  ["https://upload.wikimedia.org/wikipedia/commons/3/3d/Solarsystemscope_texture_2k_uranus.jpg"],
   neptune: ["https://upload.wikimedia.org/wikipedia/commons/5/56/Solarsystemscope_texture_2k_neptune.jpg"]
 };
-
-};
 function textureCandidatesFor(key){ return TEXSRC[key]||[]; }
 
-// ---------- System (with axial spin) ----------
+// ---------- System (axial spin + orbits) ----------
 const planetDefs = [
   {name:'Mercury', radius:0.38, dist:5, orbitSpeed:0.040, tiltDeg:0.03, key:'mercury', color:0x9aa0a6, spinHours:1407.5},
   {name:'Venus', radius:0.95, dist:7, orbitSpeed:0.015, tiltDeg:177.4, key:'venus', color:0xe5bd9a, spinHours:-5832.5},
@@ -288,7 +297,7 @@ const INFO = {
   Moon:{radiusKm:1737,yearDays:27.3,dayHours:655.7,moons:0,summary:"Tidally locked — same face toward Earth.",parent:"Earth"}
 };
 
-// Orbit rings (visual)
+// Orbit rings
 function addOrbitRing(dist){
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(dist-0.03, dist+0.03, 256),
@@ -312,9 +321,9 @@ function makeHighResRingsTexture(size=2048){
 
 const planets=[], clickables=[], ringsToFollow=[], planetMeshesByName={}; let earthMesh=null;
 function phong(){ return new THREE.MeshPhongMaterial({ color:0xffffff, specular:0x222222, shininess:10 }); }
-window.planetMeshesByName = planetMeshesByName; // expose for default-focus script
+window.planetMeshesByName = planetMeshesByName; // expose for default-focus
 
-const SPIN_SCALE = 0.5 / (24*3600); // visual scale for axial spin
+const SPIN_SCALE = 0.5 / (24*3600); // visual spin scale
 
 function addPlanet(def){
   addOrbitRing(def.dist);
@@ -355,7 +364,6 @@ loadFromList(textureCandidatesFor('moon'),
 );
 
 // Safety buffer
-const BASE_MIN_DISTANCE = 5;
 function getEffectiveRadius(obj){ return (obj?.userData?.radius)||1; }
 function enforceSafetyBufferFor(body){ const r=getEffectiveRadius(body); controls.minDistance=Math.max(r*1.15,2); }
 function clampCameraToSafety(){
@@ -369,7 +377,7 @@ function clampCameraToSafety(){
 }
 controls.addEventListener && controls.addEventListener('change', clampCameraToSafety);
 
-// Quick chooser
+// Chooser
 const chooser=document.getElementById('chooser');
 ['Mercury','Venus','Earth','Moon','Mars','Jupiter','Saturn','Uranus','Neptune'].forEach(n=>{
   const b=document.createElement('button'); b.className='btn'; b.textContent=n;
@@ -421,7 +429,7 @@ animate();
 const bodySelect=document.getElementById('bodySelect');
 bodySelect.addEventListener('change',()=>{ const name=bodySelect.value; const mesh=planetMeshesByName[name]; if(mesh) onSelectBody(mesh); });
 
-// Inspect modal
+// Inspect modal (created once)
 const inspectOverlay=document.createElement('div'); inspectOverlay.id='inspectOverlay'; inspectOverlay.innerHTML=`
   <div id="inspectPanel">
     <div id="inspectHeader">
@@ -436,8 +444,7 @@ const inspectOverlay=document.createElement('div'); inspectOverlay.id='inspectOv
   </div>`;
 document.body.appendChild(inspectOverlay);
 let inspRenderer,inspScene,inspCam,inspControls,inspMesh,inspRings=null,inspRAF=0,inspRadius=1;
-const inspectTitle=inspectOverlay.querySelector('#inspectTitle'), spinToggle=inspectOverlay.querySelector('#spinToggle'), resetInspectCam=inspectOverlay.querySelector('#resetInspectCam'), closeInspect=inspectOverlay.querySelector('#closeInspect');
-const inspectCanvas=document.createElement('div'); inspectCanvas.id='inspectCanvas'; document.getElementById('inspectBody').appendChild(inspectCanvas);
+const inspectTitle=inspectOverlay.querySelector('#inspectTitle'), spinToggle=inspectOverlay.querySelector('#spinToggle'), resetInspectCam=inspectOverlay.querySelector('#resetInspectCam'), closeInspect=inspectOverlay.querySelector('#closeInspect'), inspectCanvas=inspectOverlay.querySelector('#inspectCanvas');
 
 function openInspect(name){
   inspectTitle.textContent=`Inspect: ${name}`; inspectOverlay.style.display='flex';
@@ -465,10 +472,9 @@ function openInspect(name){
   const tick=()=>{ inspRAF=requestAnimationFrame(tick); if(spinToggle.checked){ inspMesh.rotation.y+=0.01; } inspControls.update(); inspRenderer.render(inspScene,inspCam); };
   cancelAnimationFrame(inspRAF); tick();
 }
-document.getElementById('inspectBtn').addEventListener('click',()=>{ if(followedBody) openInspect(followedBody.userData?.name||'Object'); });
-document.getElementById('inspectOverlay').addEventListener('click',(e)=>{ if(e.target.id==='inspectOverlay') document.getElementById('closeInspect').click(); });
-document.getElementById('closeInspect').addEventListener('click',()=>{ document.getElementById('inspectOverlay').style.display='none'; cancelAnimationFrame(inspRAF); });
-document.getElementById('resetInspectCam').addEventListener('click',()=>{ if(!inspControls) return; inspControls.target.set(0,0,0); inspCam.position.set(0,inspRadius*0.8,inspRadius*2.2); });
+inspectOverlay.addEventListener('click',(e)=>{ if(e.target.id==='inspectOverlay') closeInspect.click(); });
+closeInspect.addEventListener('click',()=>{ inspectOverlay.style.display='none'; cancelAnimationFrame(inspRAF); });
+resetInspectCam.addEventListener('click',()=>{ if(!inspControls) return; inspControls.target.set(0,0,0); inspCam.position.set(0,inspRadius*0.8,inspRadius*2.2); });
 
 // Tabs + Deep Zoom
 const viewPlanets=document.getElementById('view-planets');
@@ -488,42 +494,25 @@ const DZ_SOURCES={
   moon:{type:'image',url:'https://upload.wikimedia.org/wikipedia/commons/5/5e/Moon_map_LRO_WAC_Poles_1k.jpg'}
 };
 function loadLayer(key){ lastLayer=key; ensureViewer().open(DZ_SOURCES[key]); }
-
-// ---------- OPTIONAL: Tiny Texture Check Panel (remove later) ----------
-(function(){
-  const base = location.origin + location.pathname.replace(/\/[^\/]*$/, '/');
-  const needed = ["mercury","venus","earth","moon","mars","jupiter","saturn","uranus","neptune"];
-  const box = document.createElement('div');
-  box.style.cssText='position:fixed;bottom:10px;right:10px;background:rgba(0,0,0,.7);color:#fff;padding:10px;border:1px solid #4b5563;border-radius:10px;font:12px system-ui;z-index:99999;';
-  box.innerHTML = '<b>Texture Check</b><div id="tc"></div>'; document.body.appendChild(box);
-  const list = box.querySelector('#tc');
-  (async () => {
-    for (const n of needed) {
-      const url = base + 'images/' + n + '.jpg';
-      try {
-        const r = await fetch(url, { cache:'no-store' });
-        const ok = r.ok && (r.headers.get('content-type')||'').startsWith('image/');
-        const line = document.createElement('div');
-        line.innerHTML = (ok ? '✅' : '❌') + ' ' + n + ' → ' + '<a href="'+url+'" target="_blank" style="color:#93c5fd;text-decoration:underline;">images/'+n+'.jpg</a>';
-        list.appendChild(line);
-      } catch(e){
-        const line = document.createElement('div');
-        line.innerHTML = '❌ ' + n + ' → images/'+n+'.jpg (fetch error)';
-        list.appendChild(line);
-      }
-    }
-  })();
-})();
 </script>
 
 <!-- Start at Home; auto-focus default planet on load -->
 <script>
-showSection('home');
-window.addEventListener('load', ()=>{
-  const sel = document.getElementById('bodySelect').value;
-  const mesh = (window.planetMeshesByName||{})[sel];
-  if(mesh) onSelectBody(mesh);
-});
+(function(){
+  // Start on Home
+  const go = () => {
+    // When the explorer tab opens, auto-focus currently selected body
+    const sel = document.getElementById('bodySelect').value;
+    const mesh = (window.planetMeshesByName||{})[sel];
+    if(mesh) {
+      // onSelectBody is defined above in scope
+      onSelectBody(mesh);
+    }
+  };
+  // When user clicks the nav button to explorer, focus will run via onSelectBody
+  window.addEventListener('load', ()=>{ /* nothing needed here; user opens explorer via nav */ });
+})();
 </script>
 </body>
 </html>
+
