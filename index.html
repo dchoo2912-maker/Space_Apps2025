@@ -245,10 +245,12 @@ const planetNameEl = document.getElementById('planetName'); const statsEl = docu
 const inspectBtn = document.getElementById('inspectBtn'); const stopFollowBtn = document.getElementById('stopFollowBtn');
 function setStats(t){ statsEl.textContent = t||''; } function fmt(n){ return typeof n==='number'? n.toLocaleString() : n; }
 
-// ---------- Textures: threejs example + fallbacks + on-screen warnings ----------
+// ---------- Textures: local-first, then jsDelivr fallback, + warnings ----------
 const texLoader = new THREE.TextureLoader();
 texLoader.crossOrigin = 'anonymous';
+
 function maxAniso(){ return renderer.capabilities.getMaxAnisotropy?.() || 8; }
+
 function warn(msg){
   let box = document.getElementById('warnBox');
   if(!box){
@@ -263,6 +265,8 @@ function warn(msg){
   line.textContent = msg;
   list.appendChild(line);
 }
+
+/* Try each URL until one works */
 function loadFromList(urls, ok, fail){
   let i = 0;
   const tryNext = () => {
@@ -271,7 +275,7 @@ function loadFromList(urls, ok, fail){
     texLoader.load(u,
       t => {
         t.anisotropy = maxAniso();
-        if('colorSpace' in t) t.colorSpace = THREE.SRGBColorSpace; else t.encoding = THREE.sRGBEncoding;
+        if ('colorSpace' in t) t.colorSpace = THREE.SRGBColorSpace; else t.encoding = THREE.sRGBEncoding;
         ok(t, u);
       },
       undefined,
@@ -281,46 +285,56 @@ function loadFromList(urls, ok, fail){
   tryNext();
 }
 
-/* Texture sources (stable + CORS-safe) */
+function colorTexture(hex=0x777777){
+  const c=document.createElement('canvas'); c.width=c.height=2; const x=c.getContext('2d');
+  x.fillStyle='#'+hex.toString(16).padStart(6,'0'); x.fillRect(0,0,2,2);
+  const t=new THREE.CanvasTexture(c); t.anisotropy=maxAniso();
+  if('colorSpace'in t) t.colorSpace=THREE.SRGBColorSpace; else t.encoding=THREE.sRGBEncoding;
+  return t;
+}
+
+/* LOCAL (same-origin) first, then jsDelivr mirrors (CORS-OK). 
+   Put the local files in /images as listed below. */
 const TEXSRC = {
   mercury: [
-    "https://threejs.org/examples/textures/planets/mercury.png",
-    "https://upload.wikimedia.org/wikipedia/commons/2/2c/Mercury_global_map_MESSENGER_mosaic_enhanced_color.jpg"
+    "images/mercury.jpg",
+    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/mercury.png"
   ],
   venus: [
-    "https://threejs.org/examples/textures/planets/venus.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/8/85/Venus_RGB_Map_1800x900.jpg"
+    "images/venus.jpg",
+    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/venus.jpg"
   ],
   earth: [
-    "https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/5/5f/Blue_Marble_2002.png"
+    "images/earth.jpg",
+    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/earth_atmos_2048.jpg"
   ],
   moon: [
-    "https://threejs.org/examples/textures/planets/moon_1024.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/5/5e/Moon_map_LRO_WAC_Poles_1k.jpg"
+    "images/moon.jpg",
+    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/moon_1024.jpg"
   ],
   mars: [
-    "https://threejs.org/examples/textures/planets/mars_1k_color.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/0/02/Mars_Viking_MDIM21_1km_plus_poles.jpg"
+    "images/mars.jpg",
+    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/mars_1k_color.jpg"
   ],
   jupiter: [
-    "https://threejs.org/examples/textures/planets/jupiter2_1024.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/5/5a/Jupiter_map_by_Askaniy.jpg"
+    "images/jupiter.jpg",
+    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/jupiter2_1024.jpg"
   ],
   saturn: [
-    "https://threejs.org/examples/textures/planets/saturn.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/f/f0/Saturn_map_by_Askaniy.png"
+    "images/saturn.jpg",
+    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/saturn.jpg"
   ],
   uranus: [
-    "https://threejs.org/examples/textures/planets/uranus.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/3/3d/Solarsystemscope_texture_2k_uranus.jpg"
+    "images/uranus.jpg",
+    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/uranus.jpg"
   ],
   neptune: [
-    "https://threejs.org/examples/textures/planets/neptune.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/5/56/Solarsystemscope_texture_2k_neptune.jpg"
+    "images/neptune.jpg",
+    "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r152/examples/textures/planets/neptune.jpg"
   ]
 };
-function textureCandidatesFor(key){ return TEXSRC[key]||[]; }
+
+function textureCandidatesFor(key){ return TEXSRC[key] || []; }
 function colorTexture(hex=0x777777){
   const c=document.createElement('canvas'); c.width=c.height=2; const x=c.getContext('2d');
   x.fillStyle='#'+hex.toString(16).padStart(6,'0'); x.fillRect(0,0,2,2);
