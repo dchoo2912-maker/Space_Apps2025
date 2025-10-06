@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Planet Inspect — Single Planet Viewer</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:system-ui,Segoe UI,Roboto,Arial}
+  #ui{position:fixed;left:0;right:0;bottom:0;display:flex;flex-wrap:wrap;gap:8px;padding:12px;background:linear-gradient(to top,rgba(0,0,0,.65),transparent);z-index:10}
+  .btn{padding:8px 12px;border-radius:999px;border:1px solid #ffffff22;color:#eaf2ff;background:#0b1532aa;cursor:pointer}
+  .btn:hover{background:#14214f}
+  #title{position:fixed;top:10px;left:12px;color:#cfe8ff;background:#0b1532aa;padding:8px 12px;border-radius:10px;border:1px solid #ffffff22;z-index:10}
+</style>
+<!-- Three.js + OrbitControls from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+<div id="title">Inspect — <span id="pname">…</span></div>
+<div id="ui"></div>
+<script>
+const PLANETS = [
+  {name:"Mercury", r:0.38, tilt:0.03,  spin:0.0003,   tex:"textures/mercury.jpg"},
+  {name:"Venus",   r:0.95, tilt:177.4, spin:-0.00015, tex:"textures/venus.jpg"},
+  {name:"Earth",   r:1.00, tilt:23.44, spin:0.02,     tex:"textures/earth.jpg"},
+  {name:"Moon",    r:0.27, tilt: 6.68, spin:0.004,    tex:"textures/moon.jpg"},
+  {name:"Mars",    r:0.53, tilt:25.19, spin:0.018,    tex:"textures/mars.jpg"},
+  {name:"Jupiter", r:1.50, tilt: 3.13, spin:0.05,     tex:"textures/jupiter.jpg"},
+  {name:"Saturn",  r:1.20, tilt:26.73, spin:0.035,    tex:"textures/saturn.jpg"},
+  {name:"Uranus",  r:1.00, tilt:97.77, spin:-0.03,    tex:"textures/uranus.jpg"},
+  {name:"Neptune", r:1.00, tilt:28.32, spin:0.028,    tex:"textures/neptune.jpg"}
+];
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 5000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(devicePixelRatio||1);
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.appendChild(renderer.domElement);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.06; controls.enablePan = false;
+camera.position.set(0, 1.5, 5); controls.target.set(0,0,0);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+scene.add(new THREE.HemisphereLight(0xbfdfff, 0x080820, 0.3));
+const sun = new THREE.PointLight(0xffffff, 2.0, 0); sun.position.set(0,0,0); scene.add(sun);
+
+const loader = new THREE.TextureLoader();
+let current=null, ring=null;
+
+function show(name){
+  document.getElementById('pname').textContent = name;
+  if (current){ scene.remove(current); current.geometry.dispose(); current.material.map?.dispose(); current.material.dispose(); current=null; }
+  if (ring){ scene.remove(ring); ring.geometry.dispose(); ring.material.dispose(); ring=null; }
+
+  const p = PLANETS.find(x=>x.name===name) || PLANETS[2]; // default Earth
+  const geo = new THREE.SphereGeometry(p.r, 96, 64);
+  const tex = loader.load(p.tex);
+  tex.anisotropy = renderer.capabilities.getMaxAnisotropy?.() ?? 8;
+  const mat = new THREE.MeshPhongMaterial({ map:tex, specular:0x222222, shininess:8 });
+  current = new THREE.Mesh(geo, mat);
+  current.rotation.z = THREE.MathUtils.degToRad(p.tilt || 0);
+  current.userData = { spin:p.spin||0 };
+  scene.add(current);
+
+  if (name==="Saturn"){
+    const inner = p.r*2.05, outer = p.r*3.8;
+    const g = new THREE.RingGeometry(inner, outer, 256, 1);
+    const m = new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.65, side:THREE.DoubleSide});
+    ring = new THREE.Mesh(g, m); ring.rotation.x = -Math.PI/2; scene.add(ring);
+  }
+
+  // ease camera
+  const start = camera.position.clone(), st = controls.target.clone();
+  const endT = new THREE.Vector3(0,0,0), endP = new THREE.Vector3(0, p.r*0.5, p.r*3.2);
+  let t=0; (function anim(){ t+=0.03; const e=t>=1?1:1-Math.pow(1-t,3);
+    camera.position.lerpVectors(start, endP, e);
+    controls.target.lerpVectors(st, endT, e);
+    if (e<1) requestAnimationFrame(anim);
+  })();
+}
+
+addEventListener("dblclick", ()=>{ camera.position.set(0,1.5,5); controls.target.set(0,0,0); });
+
+// buttons
+const ui = document.getElementById("ui");
+PLANETS.forEach(p=>{ const b=document.createElement("button"); b.className="btn"; b.textContent=p.name; b.onclick=()=>show(p.name); ui.appendChild(b); });
+
+// pick from URL hash
+function startFromHash(){
+  const h = decodeURIComponent(location.hash.replace(/^#/,'')) || 'Earth';
+  show(h);
+}
+startFromHash();
+addEventListener('hashchange', startFromHash);
+
+// animate
+function animate(){
+  requestAnimationFrame(animate);
+  if (current){ current.rotation.y += (current.userData.spin||0); if (ring) ring.rotation.z = current.rotation.z; }
+  controls.update(); renderer.render(scene, camera);
+}
+animate();
+
+addEventListener("resize", ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+</script>
+</body>
+</html>
