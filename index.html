@@ -1,111 +1,269 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2575.7">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'; color: #e5eeff; -webkit-text-stroke: #e5eeff}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'; color: #e5eeff; -webkit-text-stroke: #e5eeff; min-height: 15.0px}
-    span.s1 {font-kerning: none}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Solar System — GitHub Pages Textures Working</title>
+  <style>
+    html, body { margin:0; height:100%; background:#000; color:#ddd; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial; }
+    #app { position:fixed; inset:0; }
+    #ui {
+      position: fixed; left: 12px; top: 12px; z-index: 10; padding: 12px 14px;
+      background: rgba(10,10,20,.75); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px; backdrop-filter: blur(6px); max-width: 320px; line-height: 1.35;
+    }
+    #ui h2 { margin: 0 0 6px; font-size: 16px; color: #fff; }
+    #ui code { background: rgba(255,255,255,.08); padding: 2px 6px; border-radius: 6px; }
+    a { color: #9ad0ff; text-decoration: none; }
   </style>
+  <!-- Three.js + OrbitControls (CDN, CORS-safe on GitHub Pages) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
-<p class="p1"><span class="s1">&lt;!DOCTYPE html&gt;</span></p>
-<p class="p1"><span class="s1">&lt;html lang="en"&gt;</span></p>
-<p class="p1"><span class="s1">&lt;head&gt;</span></p>
-<p class="p1"><span class="s1">&lt;meta charset="UTF-8" /&gt;</span></p>
-<p class="p1"><span class="s1">&lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;</span></p>
-<p class="p1"><span class="s1">&lt;title&gt;Mission Vista – Solar System&lt;/title&gt;</span></p>
-<p class="p1"><span class="s1">&lt;style&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#fff;font-family:sans-serif}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>#planetName{position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.6);padding:8px 12px;border-radius:8px}</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>canvas{display:block}</span></p>
-<p class="p1"><span class="s1">&lt;/style&gt;</span></p>
-<p class="p1"><span class="s1">&lt;script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"&gt;&lt;/script&gt;</span></p>
-<p class="p1"><span class="s1">&lt;script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"&gt;&lt;/script&gt;</span></p>
-<p class="p1"><span class="s1">&lt;/head&gt;</span></p>
-<p class="p1"><span class="s1">&lt;body&gt;</span></p>
-<p class="p1"><span class="s1">&lt;div id="planetName"&gt;Click a planet&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1">&lt;script&gt;</span></p>
-<p class="p1"><span class="s1">const scene = new THREE.Scene();</span></p>
-<p class="p1"><span class="s1">const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 2000);</span></p>
-<p class="p1"><span class="s1">camera.position.set(0,20,60);</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1">const renderer = new THREE.WebGLRenderer({antialias:true});</span></p>
-<p class="p1"><span class="s1">renderer.setSize(innerWidth, innerHeight);</span></p>
-<p class="p1"><span class="s1">if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;</span></p>
-<p class="p1"><span class="s1">document.body.appendChild(renderer.domElement);</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1">const controls = new THREE.OrbitControls(camera, renderer.domElement);</span></p>
-<p class="p1"><span class="s1">controls.enableDamping = true;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1">scene.add(new THREE.AmbientLight(0xffffff,0.3));</span></p>
-<p class="p1"><span class="s1">const sunLight = new THREE.PointLight(0xffffff,1.2);</span></p>
-<p class="p1"><span class="s1">scene.add(sunLight);</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1">const sun = new THREE.Mesh(new THREE.SphereGeometry(4,64,64), new THREE.MeshBasicMaterial({color:0xffee88}));</span></p>
-<p class="p1"><span class="s1">scene.add(sun);</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1">// Planets (no axis spin, only orbits)</span></p>
-<p class="p1"><span class="s1">const loader = new THREE.TextureLoader();</span></p>
-<p class="p1"><span class="s1">function makePlanet(name, size, dist, orbitSpeed, texFile, color){</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>const tex = loader.load("textures/"+texFile);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>const mat = new THREE.MeshPhongMaterial({map:tex,color:color||0xffffff});</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>const mesh = new THREE.Mesh(new THREE.SphereGeometry(size,64,64), mat);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>mesh.userData={dist:dist, angle:Math.random()*Math.PI*2, speed:orbitSpeed, name:name};</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>scene.add(mesh);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>return mesh;</span></p>
-<p class="p1"><span class="s1">}</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1">const planets = [</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Mercury",1,8,0.02,"mercury.jpg"),</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Venus",1.2,12,0.015,"venus.jpg"),</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Earth",1.3,16,0.012,"earth.jpg"),</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Moon",0.4,19,0.04,"moon.jpg",0xaaaaaa),</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Mars",1.1,22,0.01,"mars.jpg"),</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Jupiter",3,30,0.006,"jupiter.jpg"),</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Saturn",2.5,38,0.005,"saturn.jpg"),</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Uranus",2.2,46,0.004,"uranus.jpg"),</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>makePlanet("Neptune",2.1,54,0.003,"neptune.jpg"),</span></p>
-<p class="p1"><span class="s1">];</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1">const raycaster = new THREE.Raycaster();</span></p>
-<p class="p1"><span class="s1">const mouse = new THREE.Vector2();</span></p>
-<p class="p1"><span class="s1">let selected=null;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1">window.addEventListener('click', ev=&gt;{</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>mouse.x = (ev.clientX/innerWidth)*2 - 1;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>mouse.y = -(ev.clientY/innerHeight)*2 + 1;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>raycaster.setFromCamera(mouse, camera);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>const hit = raycaster.intersectObjects(planets);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>if(hit.length){</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>selected = hit[0].object;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>document.getElementById('planetName').textContent = "Selected: "+selected.userData.name;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
-<p class="p1"><span class="s1">});</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1">function animate(){</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>requestAnimationFrame(animate);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>planets.forEach(p=&gt;{</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>p.userData.angle += p.userData.speed;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>p.position.set(Math.cos(p.userData.angle)*p.userData.dist,0,Math.sin(p.userData.angle)*p.userData.dist);</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>});</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>controls.update();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>renderer.render(scene, camera);</span></p>
-<p class="p1"><span class="s1">}</span></p>
-<p class="p1"><span class="s1">animate();</span></p>
-<p class="p2"><span class="s1"></span><br></p>
-<p class="p1"><span class="s1">addEventListener('resize',()=&gt;{</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>camera.aspect = innerWidth/innerHeight;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>camera.updateProjectionMatrix();</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>renderer.setSize(innerWidth, innerHeight);</span></p>
-<p class="p1"><span class="s1">});</span></p>
-<p class="p1"><span class="s1">&lt;/script&gt;</span></p>
-<p class="p1"><span class="s1">&lt;/body&gt;</span></p>
-<p class="p1"><span class="s1">&lt;/html&gt;</span></p>
-<p class="p2"><span class="s1"></span><br></p>
+  <div id="app"></div>
+  <div id="ui">
+    <h2>Solar System (Textures from this repo)</h2>
+    <div>Place your images here in your repository: <code>textures/</code></div>
+    <ul style="margin:6px 0 0 18px;">
+      <li>sun.jpg</li>
+      <li>mercury.jpg</li>
+      <li>venus.jpg</li>
+      <li>earth.jpg</li>
+      <li>moon.jpg</li>
+      <li>mars.jpg</li>
+      <li>jupiter.jpg</li>
+      <li>saturn.jpg</li>
+      <li>saturn_ring.png (transparent PNG)</li>
+      <li>uranus.jpg</li>
+      <li>neptune.jpg</li>
+      <li>stars.jpg (equirectangular starfield)</li>
+    </ul>
+    <div style="margin-top:6px;font-size:12px;opacity:.85;">
+      This file uses <em>relative</em> paths like <code>textures/earth.jpg</code>, which work on GitHub Pages even for project sites.
+      If a texture is missing, a solid color fallback is used.
+    </div>
+  </div>
+  <script>
+  // ---------- Basic scene ----------
+  const container = document.getElementById('app');
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 10000);
+  camera.position.set(0, 20, 70);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(devicePixelRatio);
+  renderer.setSize(innerWidth, innerHeight);
+  container.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+
+  // Lighting
+  const hemi = new THREE.HemisphereLight(0x88aaff, 0x080820, 0.2);
+  scene.add(hemi);
+  const sunLight = new THREE.PointLight(0xffffff, 2.2, 0, 2);
+  scene.add(sunLight);
+
+  // ---------- Texture loader (relative paths for GitHub Pages) ----------
+  const loader = new THREE.TextureLoader();
+  loader.setPath('textures/'); // all texture loads are relative to /textures/
+
+  function loadTex(name, onLoad) {
+    return new Promise(resolve => {
+      loader.load(name,
+        tex => { tex.colorSpace = THREE.SRGBColorSpace; resolve(tex); },
+        undefined,
+        err => { console.warn('Missing texture', name); resolve(null); }
+      );
+    });
+  }
+
+  // ---------- Starfield background (optional) ----------
+  (async () => {
+    const stars = await loadTex('stars.jpg');
+    if (stars) {
+      const rt = new THREE.WebGLCubeRenderTarget(1024);
+      // Quick equirectangular background
+      scene.background = stars; // works for equirectangular in r152 when set as background
+    } else {
+      scene.background = new THREE.Color(0x000000);
+    }
+  })();
+
+  // ---------- Helper to build a planet mesh ----------
+  function makePlanet(radius, tex, colorHex = 0x999999) {
+    const geo = new THREE.SphereGeometry(radius, 64, 64);
+    const mat = tex
+      ? new THREE.MeshStandardMaterial({ map: tex, roughness: 1.0, metalness: 0.0 })
+      : new THREE.MeshStandardMaterial({ color: colorHex, roughness: 1.0, metalness: 0.0 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = false; mesh.receiveShadow = false;
+    return mesh;
+  }
+
+  // ---------- Build system ----------
+  const system = new THREE.Group();
+  scene.add(system);
+
+  // Sun
+  const sunGroup = new THREE.Group();
+  system.add(sunGroup);
+
+  // Load all planet textures in parallel, then build
+  (async () => {
+    const [sunTex, mercuryTex, venusTex, earthTex, moonTex, marsTex, jupiterTex, saturnTex, ringTex, uranusTex, neptuneTex] = await Promise.all([
+      loadTex('sun.jpg'),
+      loadTex('mercury.jpg'),
+      loadTex('venus.jpg'),
+      loadTex('earth.jpg'),
+      loadTex('moon.jpg'),
+      loadTex('mars.jpg'),
+      loadTex('jupiter.jpg'),
+      loadTex('saturn.jpg'),
+      loadTex('saturn_ring.png'),
+      loadTex('uranus.jpg'),
+      loadTex('neptune.jpg'),
+    ]);
+
+    // Sun (emissive)
+    const sun = makePlanet(6, sunTex, 0xffcc66);
+    sun.material.emissive = new THREE.Color(0xffffbb);
+    sun.material.emissiveIntensity = 1.0;
+    sunGroup.add(sun);
+    sunLight.position.copy(sun.position);
+
+    // Simple orbit data (scaled, not to scale)
+    const orbitData = [
+      { name: 'Mercury', radius: 10, size: 0.7, tex: mercuryTex, speed: 0.02 },
+      { name: 'Venus',   radius: 14, size: 1.0, tex: venusTex,   speed: 0.015 },
+      { name: 'Earth',   radius: 18, size: 1.05, tex: earthTex,  speed: 0.012, moon: { size: 0.28, dist: 2.0, tex: moonTex } },
+      { name: 'Mars',    radius: 22, size: 0.9, tex: marsTex,    speed: 0.010 },
+      { name: 'Jupiter', radius: 30, size: 3.2, tex: jupiterTex, speed: 0.006 },
+      { name: 'Saturn',  radius: 38, size: 2.8, tex: saturnTex,  speed: 0.005, ring: true },
+      { name: 'Uranus',  radius: 46, size: 2.2, tex: uranusTex,  speed: 0.004 },
+      { name: 'Neptune', radius: 54, size: 2.1, tex: neptuneTex, speed: 0.0035 },
+    ];
+
+    const planets = [];
+
+    orbitData.forEach(d => {
+      const pivot = new THREE.Group(); // for orbiting
+      system.add(pivot);
+
+      const planet = makePlanet(d.size, d.tex);
+      planet.position.set(d.radius, 0, 0);
+      planet.userData = { name: d.name, speed: d.speed, orbitRadius: d.radius };
+      pivot.add(planet);
+
+      // Optional: orbit ring (wireframe)
+      const ringGeo = new THREE.RingGeometry(d.radius - 0.01, d.radius + 0.01, 128);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x223344, side: THREE.DoubleSide, transparent: true, opacity: 0.35 });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = -Math.PI / 2;
+      system.add(ring);
+
+      // Moons
+      if (d.moon) {
+        const moonPivot = new THREE.Group();
+        moonPivot.position.copy(planet.position);
+        system.add(moonPivot);
+        const moon = makePlanet(d.moon.size, d.moon.tex, 0xbbbbbb);
+        moon.position.set(d.moon.dist, 0, 0);
+        moon.userData = { host: planet, speed: d.speed * 6 };
+        moonPivot.add(moon);
+        planet.userData.moonPivot = moonPivot;
+        planet.userData.moon = moon;
+      }
+
+      // Saturn ring
+      if (d.ring) {
+        const inner = d.size * 1.35; const outer = d.size * 2.1;
+        const geo = new THREE.RingGeometry(inner, outer, 180, 1);
+        const uv = geo.attributes.uv; // stretch ring texture radially
+        for (let i = 0; i < uv.count; i++) {
+          const u = uv.getX(i);
+          const v = uv.getY(i);
+          uv.setXY(i, v, 1.0); // simple remap for nicer look
+        }
+        const mat = new THREE.MeshBasicMaterial({
+          map: ringTex || null,
+          color: ringTex ? 0xffffff : 0xcccccc,
+          transparent: true,
+          opacity: ringTex ? 1.0 : 0.6,
+          side: THREE.DoubleSide
+        });
+        const ringMesh = new THREE.Mesh(geo, mat);
+        ringMesh.rotation.x = -Math.PI / 2;
+        ringMesh.position.copy(planet.position);
+        system.add(ringMesh);
+        planet.userData.saturnRing = ringMesh;
+      }
+
+      planets.push({ pivot, planet, data: d });
+    });
+
+    // Click to focus a planet
+    const ray = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    const clickable = planets.map(p => p.planet);
+
+    addEventListener('pointerdown', (e) => {
+      mouse.x = (e.clientX / innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+      ray.setFromCamera(mouse, camera);
+      const hit = ray.intersectObjects(clickable, false)[0];
+      if (hit) {
+        const target = hit.object;
+        // Smoothly move camera towards the planet
+        const to = new THREE.Vector3();
+        target.getWorldPosition(to);
+        const dir = new THREE.Vector3().subVectors(camera.position, to).normalize();
+        const dist = Math.max(8, target.geometry.parameters.radius * 6);
+        const newPos = to.clone().add(dir.multiplyScalar(dist));
+        animateCam(camera.position.clone(), newPos, to);
+      }
+    });
+
+    function animateCam(from, toPos, lookAt) {
+      const start = performance.now();
+      const dur = 800;
+      (function step(now){
+        const t = Math.min(1, (now - start)/dur);
+        camera.position.lerpVectors(from, toPos, t);
+        controls.target.lerp(lookAt, t);
+        if (t < 1) requestAnimationFrame(step);
+      })(start);
+    }
+
+    // Animation
+    const clock = new THREE.Clock();
+    function tick() {
+      const t = clock.getElapsedTime();
+      planets.forEach(({ pivot, planet, data }) => {
+        pivot.rotation.y = t * data.speed; // orbit
+        planet.rotation.y += 0.01; // spin
+        if (planet.userData.moonPivot && planet.userData.moon) {
+          planet.userData.moonPivot.rotation.y = t * (data.speed * 6);
+        }
+        if (planet.userData.saturnRing) {
+          planet.userData.saturnRing.rotation.z = 0.2; // slight tilt
+        }
+      });
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(tick);
+    }
+    tick();
+  })();
+
+  // Resize
+  addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+  </script>
 </body>
 </html>
+
