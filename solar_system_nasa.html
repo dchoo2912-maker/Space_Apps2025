@@ -10,7 +10,6 @@
   .btn:hover{background:#14214f}
   #title{position:fixed;top:10px;left:12px;color:#cfe8ff;background:#0b1532aa;padding:8px 12px;border-radius:10px;border:1px solid #ffffff22;z-index:10}
 </style>
-<!-- Three.js + OrbitControls from CDN -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
 </head>
@@ -71,7 +70,6 @@ function show(name){
     ring = new THREE.Mesh(g, m); ring.rotation.x = -Math.PI/2; scene.add(ring);
   }
 
-  // ease camera
   const start = camera.position.clone(), st = controls.target.clone();
   const endT = new THREE.Vector3(0,0,0), endP = new THREE.Vector3(0, p.r*0.5, p.r*3.2);
   let t=0; (function anim(){ t+=0.03; const e=t>=1?1:1-Math.pow(1-t,3);
@@ -83,11 +81,9 @@ function show(name){
 
 addEventListener("dblclick", ()=>{ camera.position.set(0,1.5,5); controls.target.set(0,0,0); });
 
-// buttons
 const ui = document.getElementById("ui");
 PLANETS.forEach(p=>{ const b=document.createElement("button"); b.className="btn"; b.textContent=p.name; b.onclick=()=>show(p.name); ui.appendChild(b); });
 
-// pick from URL hash
 function startFromHash(){
   const h = decodeURIComponent(location.hash.replace(/^#/,'')) || 'Earth';
   show(h);
@@ -95,7 +91,6 @@ function startFromHash(){
 startFromHash();
 addEventListener('hashchange', startFromHash);
 
-// animate
 function animate(){
   requestAnimationFrame(animate);
   if (current){ current.rotation.y += (current.userData.spin||0); if (ring) ring.rotation.z = current.rotation.z; }
