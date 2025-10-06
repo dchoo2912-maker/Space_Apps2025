@@ -1,119 +1,204 @@
-<!-- SAME HEAD + STYLES as you pasted above -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Mission Vista — Solar System Explorer</title>
 
-<script>
-// ---------- Main Scene ----------
-const canvas = document.getElementById('planet-canvas');
-const renderer = new THREE.WebGLRenderer({ antialias:true, canvas });
-renderer.setSize(canvas.clientWidth||innerWidth, canvas.clientHeight||innerHeight, false);
-renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2));
-if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace; else renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  <!-- Tailwind (UI only) -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-function resizeRendererToDisplaySize(){
-  const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
-  if(canvas.width !== Math.floor(w*renderer.getPixelRatio()) || canvas.height !== Math.floor(h*renderer.getPixelRatio())){
-    renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
-  }
-}
-window.addEventListener('resize', resizeRendererToDisplaySize);
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-const scene = new THREE.Scene(); scene.background = new THREE.Color(0x000000);
-const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 5000);
-camera.position.set(0,30,110);
-const controls = new THREE.OrbitControls(camera, canvas);
-controls.enableDamping = true; controls.dampingFactor = 0.06; controls.enablePan = false;
+  <!-- Three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
-// Lights + Sun
-scene.add(new THREE.AmbientLight(0xffffff, 0.38));
-scene.add(new THREE.HemisphereLight(0xbfdfff, 0x080820, 0.28));
-const sunLight = new THREE.PointLight(0xffffff, 2.1, 0); sunLight.position.set(0,0,0); scene.add(sunLight);
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(100% 80% at 50% 0%, #0a0a20 0%, #000 80%);
+      color: white;
+      font-family: Inter, sans-serif;
+      overflow: hidden;
+    }
+    #planet-canvas {
+      width: 100%;
+      height: 100vh;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <!-- Canvas -->
+  <canvas id="planet-canvas"></canvas>
 
-// TEXTURES
-const TEXSRC = {
-  sun:"textures/sun.jpg",
-  mercury:"textures/mercury.jpg", venus:"textures/venus.jpg", earth:"textures/earth.jpg",
-  moon:"textures/moon.jpg", mars:"textures/mars.jpg", jupiter:"textures/jupiter.jpg",
-  saturn:"textures/saturn.jpg", saturnRing:"textures/saturn_ring.png",
-  uranus:"textures/uranus.jpg", neptune:"textures/neptune.jpg"
-};
-const texLoader = new THREE.TextureLoader();
+  <script>
+  // ---------- Main Scene ----------
+  const canvas = document.getElementById('planet-canvas');
+  const renderer = new THREE.WebGLRenderer({ antialias:true, canvas });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace; 
+  else renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-// SUN (with texture)
-const sun = new THREE.Mesh(
-  new THREE.SphereGeometry(3, 64, 48),
-  new THREE.MeshBasicMaterial({ map: texLoader.load(TEXSRC.sun) })
-);
-scene.add(sun);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
 
-// Planet defs
-const planetDefs = [
-  {name:'Mercury', radius:0.38, dist:5, orbitSpeed:0.040, tiltDeg:0.03, key:'mercury', spinHours:1407.5},
-  {name:'Venus',   radius:0.95, dist:7, orbitSpeed:0.015, tiltDeg:177.4, key:'venus',   spinHours:-5832.5},
-  {name:'Earth',   radius:1.00, dist:10, orbitSpeed:0.010, tiltDeg:23.4,  key:'earth',   spinHours:24},
-  {name:'Mars',    radius:0.53, dist:15, orbitSpeed:0.0053,tiltDeg:25.2,  key:'mars',    spinHours:24.6},
-  {name:'Jupiter', radius:1.50, dist:25, orbitSpeed:0.00084,tiltDeg:3.1,  key:'jupiter', spinHours:9.9},
-  {name:'Saturn',  radius:1.20, dist:35, orbitSpeed:0.00034,tiltDeg:26.7, key:'saturn',  spinHours:10.7},
-  {name:'Uranus',  radius:1.00, dist:45, orbitSpeed:0.00012,tiltDeg:97.8, key:'uranus',  spinHours:-17.2},
-  {name:'Neptune', radius:1.00, dist:55, orbitSpeed:0.00006,tiltDeg:28.3, key:'neptune', spinHours:16.1}
-];
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 5000);
+  camera.position.set(0,30,110);
 
-const planets=[], clickables=[], ringsToFollow=[], planetMeshesByName={};
-const SPIN_SCALE = 0.5 / (24*3600);
+  // Controls (basic orbit replacement)
+  const controls = new (class {
+    constructor(object, domElement){
+      this.object = object;
+      this.domElement = domElement;
+      this.target = new THREE.Vector3();
+      this.enabled = true;
+      this.isDragging = false;
+      this.prev = {x:0,y:0};
+      domElement.addEventListener('mousedown', e=>{this.isDragging=true;this.prev={x:e.clientX,y:e.clientY};});
+      domElement.addEventListener('mouseup', ()=>this.isDragging=false);
+      domElement.addEventListener('mousemove', e=>{
+        if(!this.isDragging) return;
+        const dx=(e.clientX-this.prev.x)/200, dy=(e.clientY-this.prev.y)/200;
+        camera.position.applyAxisAngle(new THREE.Vector3(0,1,0), -dx);
+        camera.position.y += dy*20;
+        this.prev={x:e.clientX,y:e.clientY};
+      });
+    }
+    update(){ this.object.lookAt(this.target); }
+  })(camera, canvas);
 
-function addPlanet(def){
-  const mesh = new THREE.Mesh(new THREE.SphereGeometry(def.radius,64,48), new THREE.MeshPhongMaterial());
-  mesh.rotation.z = THREE.MathUtils.degToRad(def.tiltDeg);
-  mesh.userData = {
-    name:def.name, dist:def.dist, theta:Math.random()*Math.PI*2,
-    orbitSpeed:def.orbitSpeed, spinRadPerSec:(2*Math.PI/(Math.abs(def.spinHours)*3600))*(def.spinHours<0?-1:1)*SPIN_SCALE
+  // Resize
+  window.addEventListener('resize', ()=>{
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+  const sunLight = new THREE.PointLight(0xffffff, 2, 0);
+  sunLight.position.set(0,0,0);
+  scene.add(sunLight);
+
+  // Texture loader
+  const TEXSRC = {
+    sun:"textures/sun.jpg",
+    mercury:"textures/mercury.jpg",
+    venus:"textures/venus.jpg",
+    earth:"textures/earth.jpg",
+    moon:"textures/moon.jpg",
+    mars:"textures/mars.jpg",
+    jupiter:"textures/jupiter.jpg",
+    saturn:"textures/saturn.jpg",
+    saturnRing:"textures/saturn_ring.png",
+    uranus:"textures/uranus.jpg",
+    neptune:"textures/neptune.jpg"
   };
-  mesh.position.set(def.dist*Math.cos(mesh.userData.theta),0,def.dist*Math.sin(mesh.userData.theta));
-  scene.add(mesh); planets.push(mesh); clickables.push(mesh); planetMeshesByName[def.name]=mesh;
+  const texLoader = new THREE.TextureLoader();
 
-  // Texture
-  texLoader.load(TEXSRC[def.key], t=>{
-    t.colorSpace=THREE.SRGBColorSpace; mesh.material.map=t; mesh.material.needsUpdate=true;
-  });
+  // Sun
+  const sun = new THREE.Mesh(
+    new THREE.SphereGeometry(3, 64, 48),
+    new THREE.MeshBasicMaterial({ map: texLoader.load(TEXSRC.sun) })
+  );
+  scene.add(sun);
 
-  // Saturn rings
-  if(def.name==='Saturn'){
-    const ringGeo=new THREE.RingGeometry(def.radius*2.1, def.radius*3.5, 128);
-    const ringMat=new THREE.MeshBasicMaterial({
-      map: texLoader.load(TEXSRC.saturnRing),
-      transparent:true, side:THREE.DoubleSide
+  // Planets
+  const SPIN_SCALE = 0.5 / (24*3600);
+  const planets=[], ringsToFollow=[], planetMeshes={};
+
+  const planetDefs = [
+    {name:'Mercury', radius:0.38, dist:5, orbitSpeed:0.040, tilt:0.03, key:'mercury', spinHours:1407.5},
+    {name:'Venus', radius:0.95, dist:7, orbitSpeed:0.015, tilt:177.4, key:'venus', spinHours:-5832.5},
+    {name:'Earth', radius:1.0, dist:10, orbitSpeed:0.010, tilt:23.4, key:'earth', spinHours:24},
+    {name:'Mars', radius:0.53, dist:15, orbitSpeed:0.0053, tilt:25.2, key:'mars', spinHours:24.6},
+    {name:'Jupiter', radius:1.5, dist:25, orbitSpeed:0.00084, tilt:3.1, key:'jupiter', spinHours:9.9},
+    {name:'Saturn', radius:1.2, dist:35, orbitSpeed:0.00034, tilt:26.7, key:'saturn', spinHours:10.7},
+    {name:'Uranus', radius:1.0, dist:45, orbitSpeed:0.00012, tilt:97.8, key:'uranus', spinHours:-17.2},
+    {name:'Neptune', radius:1.0, dist:55, orbitSpeed:0.00006, tilt:28.3, key:'neptune', spinHours:16.1}
+  ];
+
+  function addPlanet(def){
+    const mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(def.radius,64,48),
+      new THREE.MeshPhongMaterial()
+    );
+    mesh.rotation.z = THREE.MathUtils.degToRad(def.tilt);
+    mesh.userData = {
+      dist:def.dist,
+      theta:Math.random()*Math.PI*2,
+      orbitSpeed:def.orbitSpeed,
+      spin:(2*Math.PI/(Math.abs(def.spinHours)*3600))*(def.spinHours<0?-1:1)*SPIN_SCALE
+    };
+    scene.add(mesh);
+    planets.push(mesh);
+    planetMeshes[def.name]=mesh;
+
+    texLoader.load(TEXSRC[def.key], t=>{
+      t.colorSpace = THREE.SRGBColorSpace;
+      mesh.material.map=t;
+      mesh.material.needsUpdate=true;
     });
-    const ring=new THREE.Mesh(ringGeo,ringMat);
-    ring.rotation.x=-Math.PI/2; ring.position.copy(mesh.position);
-    scene.add(ring); ringsToFollow.push({ring,parent:mesh});
+
+    // Saturn rings
+    if(def.name==='Saturn'){
+      const ringGeo = new THREE.RingGeometry(def.radius*2.1, def.radius*3.5, 128);
+      const ringMat = new THREE.MeshBasicMaterial({
+        map: texLoader.load(TEXSRC.saturnRing),
+        transparent:true,
+        side:THREE.DoubleSide
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x=-Math.PI/2;
+      scene.add(ring);
+      ringsToFollow.push({ring,parent:mesh});
+    }
   }
-}
-planetDefs.forEach(addPlanet);
+  planetDefs.forEach(addPlanet);
 
-// Moon (same logic as your code)
-const moon=new THREE.Mesh(new THREE.SphereGeometry(0.27,64,48),new THREE.MeshPhongMaterial());
-moon.userData={name:'Moon',distFromParent:2.5,theta:Math.random()*Math.PI*2,orbitSpeed:0.08,spinRadPerSec:(2*Math.PI/(655.7*3600))*SPIN_SCALE};
-scene.add(moon); clickables.push(moon);
-texLoader.load(TEXSRC.moon, t=>{moon.material.map=t; moon.material.needsUpdate=true;});
+  // Moon
+  const moon = new THREE.Mesh(new THREE.SphereGeometry(0.27,64,48), new THREE.MeshPhongMaterial());
+  moon.userData={theta:Math.random()*Math.PI*2, dist:2.5, orbitSpeed:0.08, spin:(2*Math.PI/(655.7*3600))*SPIN_SCALE};
+  scene.add(moon);
+  texLoader.load(TEXSRC.moon, t=>{moon.material.map=t;moon.material.needsUpdate=true;});
 
-// Animate
-const clock=new THREE.Clock();
-function animate(){
-  requestAnimationFrame(animate);
-  const dt=clock.getDelta();
-  planets.forEach(p=>{
-    p.userData.theta+=p.userData.orbitSpeed*dt*60;
-    p.position.set(p.userData.dist*Math.cos(p.userData.theta),0,p.userData.dist*Math.sin(p.userData.theta));
-    p.rotation.y+=p.userData.spinRadPerSec*dt;
-  });
-  ringsToFollow.forEach(({ring,parent})=> ring.position.copy(parent.position));
-  const earth=planetMeshesByName['Earth'];
-  moon.userData.theta+=moon.userData.orbitSpeed*dt*60;
-  moon.position.set(earth.position.x+moon.userData.distFromParent*Math.cos(moon.userData.theta),0,earth.position.z+moon.userData.distFromParent*Math.sin(moon.userData.theta));
-  moon.rotation.y+=moon.userData.spinRadPerSec*dt;
-  controls.update(); renderer.render(scene,camera);
-}
-animate();
-</script>
+  // Animate
+  const clock=new THREE.Clock();
+  function animate(){
+    requestAnimationFrame(animate);
+    const dt=clock.getDelta();
+
+    planets.forEach(p=>{
+      p.userData.theta+=p.userData.orbitSpeed*dt*60;
+      const R=p.userData.dist;
+      p.position.set(R*Math.cos(p.userData.theta),0,R*Math.sin(p.userData.theta));
+      p.rotation.y+=p.userData.spin*dt;
+    });
+
+    ringsToFollow.forEach(({ring,parent})=>{
+      ring.position.copy(parent.position);
+    });
+
+    const earth=planetMeshes['Earth'];
+    moon.userData.theta+=moon.userData.orbitSpeed*dt*60;
+    moon.position.set(earth.position.x+moon.userData.dist*Math.cos(moon.userData.theta),0,
+                      earth.position.z+moon.userData.dist*Math.sin(moon.userData.theta));
+    moon.rotation.y+=moon.userData.spin*dt;
+
+    controls.update();
+    renderer.render(scene,camera);
+  }
+  animate();
+  </script>
+</body>
+</html>
+
 
 
 
